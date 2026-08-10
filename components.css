@@ -1,0 +1,454 @@
+/* ==========================================================================
+    DESIGN SYSTEM REFRESH - COMPONENTS & PREMIUM BUTTON STYLES
+    ========================================================================== */
+
+/* HEADER APLIKASI MODERN DENGAN HIERARKI FONT MENARIK */
+header.app-bar {
+  background: linear-gradient(135deg, var(--accent-dark) 0%, var(--accent) 100%);
+  color: #ffffff;
+  padding: 14px 18px 12px;
+  position: sticky; top: 0; z-index: 20;
+  box-shadow: 0 6px 20px -4px rgba(15, 23, 42, 0.2);
+  width: 100%;
+  display: flex; flex-direction: column; gap: 3px;
+}
+.hdr-welcome {
+  font-size: 16px; font-weight: 800; letter-spacing: 0.2px;
+  color: #ffffff; margin: 0; display: flex; align-items: center; gap: 6px;
+  line-height: 1.25;
+}
+.hdr-sekolah {
+  font-size: 13px; font-weight: 600; color: #e2e8f0;
+  margin: 0; letter-spacing: 0.2px; opacity: 0.95;
+}
+.hdr-clock-badge {
+  align-self: flex-start;
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 20px; padding: 3px 10px; margin-top: 4px;
+  font-size: 11.5px; font-weight: 700; color: #ffffff;
+  font-variant-numeric: tabular-nums; letter-spacing: 0.2px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* ==========================================================================
+    GAYA TOMBOL PREMIUM UTAMA (PRIMARY, SECONDARY, GHOST, ICON-BTN)
+    ========================================================================== */
+.btn {
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  border-radius: 12px;
+  padding: 10px 16px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+  letter-spacing: 0.25px;
+  position: relative;
+  overflow: hidden;
+  border: none;
+  min-height: 42px;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn:active {
+  transform: scale(0.96);
+}
+/* KILAU INSET HIGHLIGHT */
+.btn::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 45%;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0));
+  pointer-events: none;
+  border-radius: 12px 12px 0 0;
+}
+
+/* 1. TOMBOL UTAMA (PRIMARY - GRADIENT GLOSS) */
+.btn.primary {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 6px 16px -2px rgba(15, 118, 110, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+.btn.primary:active {
+  box-shadow: 0 2px 8px -1px rgba(15, 118, 110, 0.4);
+}
+
+/* 2. TOMBOL SEKUNDER (SECONDARY - FROSTED PASTEL) */
+.btn.secondary {
+  background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
+  color: var(--accent-dark);
+  border: 1.5px solid var(--line);
+  box-shadow: 0 4px 12px -2px rgba(15, 23, 42, 0.08), inset 0 1px 0 #ffffff;
+}
+.btn.secondary:active {
+  background: #e2e8f0;
+  box-shadow: 0 2px 6px -1px rgba(15, 23, 42, 0.1);
+}
+
+/* 3. TOMBOL HANTU (GHOST - OUTLINE SOFT) */
+.btn.ghost {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  color: var(--muted);
+  border: 1.5px solid var(--line);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+}
+.btn.ghost:active {
+  background: #e2e8f0;
+  color: var(--ink);
+}
+
+/* TOMBOL IKON KECIL & AKSI LIST */
+.icon-btn {
+  font-family: inherit;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border: 1.5px solid var(--line);
+  padding: 7px 12px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.05), inset 0 1px 0 #ffffff;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.icon-btn:active {
+  transform: scale(0.94);
+}
+.icon-btn.danger {
+  color: var(--danger);
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  border-color: #fca5a5;
+  box-shadow: 0 3px 10px rgba(220, 38, 38, 0.12), inset 0 1px 0 #ffffff;
+}
+
+/* TOMBOL PENUTUP MODAL (CIRCULAR GLOSS) */
+.modal-close {
+  background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
+  border: 1px solid var(--line);
+  font-size: 15px; font-weight: 800;
+  width: 34px; height: 34px;
+  border-radius: 50%; color: var(--ink);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08), inset 0 1px 0 #ffffff;
+}
+.modal-close:active {
+  transform: scale(0.90);
+  background: #e2e8f0;
+}
+
+/* GAYA INPUT & DROPDOWN MODERN */
+.field{ margin-bottom: 12px; width:100%; }
+.field label{ display:block; font-size: 12px; color: var(--muted); margin-bottom: 5px; font-weight: 600; }
+.field input, .field select, .field textarea, select {
+  width:100%; border:1.5px solid var(--line); border-radius: 12px; padding: 10px 12px; font-size: 13.5px;
+  font-family:inherit; background-color: #ffffff; color: var(--ink); max-width: 100%;
+  min-height: 44px;
+  transition: all 0.2s ease;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+select, .field select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230f766e' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 14px;
+  padding-right: 36px !important;
+  cursor: pointer;
+}
+select:focus, .field select:focus, input:focus, textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.18);
+  background-color: #ffffff;
+}
+
+.row2{ display:grid; grid-template-columns:1fr 1fr; gap: 10px; width:100%; }
+.row3{ display:grid; grid-template-columns:1fr 1fr 1fr; gap: 8px; width:100%; }
+@media (max-width: 480px) {
+  .row2, .row3 { grid-template-columns: 1fr; }
+}
+
+/* WIDGET RINGKASAN HARI INI (TODAY WIDGET CARD & GRID 4 KOLOM) */
+.today-widget-card {
+  background: var(--panel);
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin-bottom: 14px;
+  box-shadow: var(--shadow);
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.today-widget-card.clickable-card {
+  cursor: pointer;
+}
+.today-widget-card.clickable-card:active {
+  transform: scale(0.97);
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+}
+.today-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-top: 10px;
+  width: 100%;
+}
+.today-stat-item {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 8px 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+.today-stat-num {
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.1;
+}
+.today-stat-lbl {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+/* GAYA HOME DASHBOARD LAUNCHER */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 10px;
+  width: 100%;
+}
+.dash-card {
+  background: var(--panel);
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius);
+  padding: 16px 12px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  position: relative;
+  overflow: hidden;
+}
+.dash-card:active {
+  transform: scale(0.95);
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+}
+.dash-icon { font-size: 28px; margin-bottom: 8px; }
+.dash-title { font-size: 13.5px; font-weight: 700; color: var(--accent-dark); margin-bottom: 3px; }
+.dash-sub { font-size: 11px; color: var(--muted); line-height: 1.35; }
+
+/* WIDGET IKON KALENDER DINAMIS */
+.mini-cal-icon {
+  width: 44px; height: 46px; border-radius: 10px;
+  border: 1.5px solid var(--accent);
+  background: #fff; overflow: hidden; display: flex;
+  flex-direction: column; align-items: center; justify-content: space-between;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.1); margin-bottom: 2px;
+}
+.mini-cal-header {
+  width: 100%; background: var(--danger); color: #fff;
+  font-size: 9.5px; font-weight: 800; text-align: center;
+  padding: 2px 0; letter-spacing: 0.5px; text-transform: uppercase;
+}
+.mini-cal-body {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  font-size: 18px; font-weight: 800; color: var(--ink); line-height: 1;
+}
+
+/* WIDGET JADWAL MENGAJAR GURU */
+.jadwal-widget-card {
+  background: var(--panel); border: 1.5px solid var(--line);
+  border-radius: var(--radius); padding: 16px; margin-top: 14px; width: 100%;
+  box-shadow: var(--shadow);
+}
+.jadwal-day-tabs {
+  display: flex; gap: 8px; overflow-x: auto; margin-bottom: 12px;
+  padding-bottom: 4px; -webkit-overflow-scrolling: touch;
+}
+.jadwal-day-btn {
+  padding: 8px 14px; border-radius: 10px; border: 1.5px solid var(--line);
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  font-size: 11.5px; font-weight: 700; color: var(--muted);
+  cursor: pointer; white-space: nowrap; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  flex-shrink: 0; box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+}
+.jadwal-day-btn:active { transform: scale(0.94); }
+.jadwal-day-btn.active {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+  color: #fff; border-color: var(--accent-dark);
+  box-shadow: 0 4px 12px rgba(15, 118, 110, 0.32), inset 0 1px 0 rgba(255,255,255,0.3);
+}
+.jadwal-day-btn.is-today-badge {
+  border-color: var(--amber); color: var(--amber);
+}
+.jadwal-day-btn.active.is-today-badge {
+  background: linear-gradient(135deg, #f59e0b 0%, #b45309 100%);
+  color: #fff; border-color: #b45309;
+  box-shadow: 0 4px 12px rgba(217, 119, 6, 0.35);
+}
+.jadwal-table {
+  width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 6px;
+}
+.jadwal-table th, .jadwal-table td {
+  border: 1px solid var(--line); padding: 8px 10px; text-align: left;
+}
+.jadwal-table th { background: #f1f5f9; color: var(--accent-dark); font-weight: 700; }
+
+/* View Screen Modul */
+.view-screen { display: none; width: 100%; }
+.view-screen.active { display: block; }
+.view-header-bar {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid var(--line);
+  flex-wrap: wrap; gap: 8px;
+}
+.wrap{ max-width:780px; margin:0 auto; padding: 16px; width:100%; overflow-x:hidden; }
+
+/* Sub-Card */
+.sub-card {
+  background: var(--panel); border: 1.5px solid var(--line);
+  border-radius: var(--radius); padding: 16px;
+  margin-bottom: 14px; width: 100%; transition: all 0.2s ease;
+  box-shadow: var(--shadow);
+}
+.sub-card-head {
+  display: flex; align-items: center; justify-content: space-between;
+  cursor: pointer; user-select: none; padding-bottom: 8px;
+  border-bottom: 1px solid var(--line); margin-bottom: 12px;
+  flex-wrap: wrap; gap: 8px;
+}
+
+/* FIX BUG PERBAIKAN JUDUL TEKS TUMPUK */
+.sub-card-title {
+  font-size: 14px; font-weight: 700; color: var(--accent-dark);
+  display: inline-flex; align-items: center; gap: 6px; margin: 0;
+  line-height: 1.35; flex-wrap: wrap;
+}
+.sub-card-title > span {
+  display: inline-flex; align-items: center; gap: 4px; flex-wrap: wrap;
+}
+.sub-card .chev { transition: transform 0.25s ease; font-size: 12px; color: var(--muted); }
+.sub-card.collapsed .chev { transform: rotate(-90deg); }
+.sub-card.collapsed .sub-card-body { display: none; }
+.sub-card.collapsed { padding-bottom: 12px; }
+.sub-card.collapsed .sub-card-head { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+
+/* SEARCH BAR INPUT */
+.search-box { position: relative; margin-bottom: 12px; width: 100%; }
+.search-box input {
+  width: 100%; padding: 10px 12px 10px 36px; border-radius: 12px;
+  border: 1.5px solid var(--line); font-size: 13px; background: #fff;
+}
+.search-box::before {
+  content: "🔍"; position: absolute; left: 12px; top: 50%;
+  transform: translateY(-50%); font-size: 13px; opacity: 0.5;
+}
+
+/* SUB-TAB PENGATURAN */
+.cfg-subtab-bar {
+  display: flex; gap: 8px; overflow-x: auto; margin-bottom: 14px;
+  padding-bottom: 6px; border-bottom: 1.5px solid var(--line);
+  -webkit-overflow-scrolling: touch;
+}
+.cfg-subtab-btn {
+  padding: 9px 15px; border-radius: 12px; border: 1.5px solid var(--line);
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  font-size: 12px; font-weight: 700; color: var(--muted);
+  cursor: pointer; white-space: nowrap; transition: all 0.2s ease;
+  flex-shrink: 0; box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+}
+.cfg-subtab-btn:active { transform: scale(0.95); }
+.cfg-subtab-btn.active {
+  background: linear-gradient(135deg, var(--accent-dark) 0%, #0f172a 100%);
+  color: #fff; border-color: var(--accent-dark);
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.28), inset 0 1px 0 rgba(255,255,255,0.2);
+}
+.cfg-subtab-panel { display: none; }
+.cfg-subtab-panel.active { display: block; }
+
+/* MODAL POPUP */
+.modal-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
+  display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 1000;
+  opacity: 0; pointer-events: none; transition: opacity 0.22s ease;
+}
+.modal-overlay.active { opacity: 1; pointer-events: auto; }
+.modal-box {
+  background: var(--panel); width: 100%; max-width: 480px; height: auto; max-height: 85vh;
+  border-radius: 20px; display: flex; flex-direction: column;
+  box-shadow: 0 20px 40px -10px rgba(0,0,0,0.35); overflow: hidden; will-change: transform;
+  border: 1.5px solid var(--line);
+}
+.modal-header {
+  position: sticky; top: 0; background: var(--panel); z-index: 10;
+  display: flex; justify-content: space-between; align-items: center;
+  border-bottom: 1px solid var(--line); padding: 14px 16px; cursor: grab; user-select: none; touch-action: none;
+}
+.modal-header:active { cursor: grabbing; }
+.modal-title { font-weight: 700; font-size: 15.5px; color: var(--accent-dark); margin: 0; }
+.modal-body-scroll {
+  flex: 1; overflow-y: auto; padding: 14px 16px; -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+.modal-footer { padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); background: #f8fafc; border-top: 1px solid var(--line); }
+
+.col-manager-item {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border: 1.5px solid var(--line); border-radius: 12px;
+  padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; gap: 8px; width:100%; margin-bottom:8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.03); transition: all 0.2s ease;
+}
+.col-manager-item:active { transform: scale(0.98); }
+.col-info { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; }
+.col-label-text { font-size: 12.5px; font-weight: 700; color: var(--ink); line-height: 1.3; }
+
+.empty-state { text-align: center; padding: 24px 16px; color: var(--muted); font-size: 13.5px; border: 1.5px dashed var(--line); border-radius: var(--radius); background: #ffffff; }
+
+.status-msg {
+  position: fixed; top: 18px; left: 50%; transform: translateX(-50%) translateY(-20px);
+  background: linear-gradient(135deg, var(--ink) 0%, #1e293b 100%); color: #ffffff;
+  padding: 11px 22px; border-radius: 30px; border: 1px solid rgba(255, 255, 255, 0.18);
+  font-size: 13px; font-weight: 700; z-index: 2500; opacity: 0; pointer-events: none;
+  transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 10px 28px -4px rgba(15, 23, 42, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  display: flex; align-items: center; gap: 8px;
+}
+.status-msg.show {
+  opacity: 1; transform: translateX(-50%) translateY(0);
+}
+.hint { font-size: 11.5px; color: var(--muted); margin-top: 4px; line-height: 1.35; }
+.chk-label { font-size: 12.5px; color: var(--ink); display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; }
+.chk-label input { width: auto; cursor: pointer; min-height: auto; }

@@ -1,0 +1,100 @@
+/* ==========================================================================
+   ANDROID MATERIAL DESIGN 3 BOTTOM NAVIGATION BAR (FIXED BOTTOM BAR)
+   ========================================================================== */
+
+.android-bottom-nav {
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  background: rgba(255, 255, 255, 0.96) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-top: 1.5px solid var(--line) !important;
+  padding: 6px 8px calc(8px + env(safe-area-inset-bottom)) !important;
+  display: flex !important;
+  justify-content: space-around !important;
+  align-items: center !important;
+  z-index: 1000 !important;
+  box-shadow: 0 -4px 20px rgba(15, 23, 42, 0.1) !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  margin: 0 !important;
+}
+
+body[data-theme="dark"] .android-bottom-nav {
+  background: rgba(30, 41, 59, 0.96) !important;
+  border-color: #334155 !important;
+}
+
+.nav-item {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 1 !important;
+  min-width: 0 !important;
+  padding: 6px 0 !important;
+  cursor: pointer !important;
+  color: var(--muted) !important;
+  text-decoration: none !important;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+.nav-item:active {
+  transform: scale(0.90) !important;
+}
+
+.nav-icon-wrapper {
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 52px !important;
+  height: 28px !important;
+  border-radius: 20px !important;
+  transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.nav-icon {
+  font-size: 19px !important;
+  line-height: 1 !important;
+}
+
+.nav-label {
+  font-size: 10.5px !important;
+  font-weight: 600 !important;
+  margin-top: 3px !important;
+  letter-spacing: 0.1px !important;
+  white-space: nowrap !important;
+  transition: color 0.2s ease !important;
+}
+
+.nav-item.active .nav-icon-wrapper {
+  background: linear-gradient(135deg, var(--accent-light) 0%, rgba(204, 251, 241, 0.7) 100%) !important;
+  box-shadow: 0 3px 10px rgba(15, 118, 110, 0.2) !important;
+}
+
+.nav-item.active {
+  color: var(--accent-dark) !important;
+}
+
+.nav-item.active .nav-label {
+  font-weight: 800 !important;
+  color: var(--accent-dark) !important;
+}
+
+body[data-theme="dark"] .nav-item.active {
+  color: #f8fafc !important;
+}
+
+body[data-theme="dark"] .nav-item.active .nav-icon-wrapper {
+  background: linear-gradient(135deg, var(--accent-light) 0%, rgba(19, 78, 74, 0.8) 100%) !important;
+  box-shadow: 0 3px 10px rgba(20, 184, 166, 0.25) !important;
+}
+
+body[data-theme="dark"] .nav-item.active .nav-label {
+  color: #f8fafc !important;
+}

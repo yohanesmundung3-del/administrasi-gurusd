@@ -1,0 +1,221 @@
+/* ==========================================================================
+    CSS TEMA WARNA, PEMILIH TEMA & ADJUSTMENT DARK MODE PERSEPSI TINGGI
+    ========================================================================== */
+
+body[data-theme="navy"] {
+  --accent:#1e40af; --accent-dark:#1e3a8a; --accent-light:#dbeafe;
+}
+body[data-theme="maroon"] {
+  --accent:#9f1239; --accent-dark:#881337; --accent-light:#ffe4e6;
+}
+body[data-theme="purple"] {
+  --accent:#6b21a8; --accent-dark:#581c87; --accent-light:#f3e8ff;
+}
+
+body[data-theme="dark"] {
+  --paper:#0f172a; --panel:#1e293b; --ink:#f8fafc; --line:#334155;
+  --muted:#94a3b8; --accent:#14b8a6; --accent-dark:#0d9488; --accent-light:#134e4a;
+  --shadow:0 6px 18px -3px rgba(0, 0, 0, 0.4);
+}
+
+/* 1. INPUT, SELECT, TEXTAREA DARK MODE */
+body[data-theme="dark"] select, 
+body[data-theme="dark"] .field select, 
+body[data-theme="dark"] input, 
+body[data-theme="dark"] textarea {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+  border-color: #334155 !important;
+}
+
+/* 2. KARTU & PANEL DARK MODE */
+body[data-theme="dark"] .dash-card, 
+body[data-theme="dark"] .sub-card, 
+body[data-theme="dark"] .calendar-card, 
+body[data-theme="dark"] .stat-card, 
+body[data-theme="dark"] .attendance-card, 
+body[data-theme="dark"] .col-manager-item, 
+body[data-theme="dark"] .jadwal-widget-card, 
+body[data-theme="dark"] .today-widget-card {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+  color: #f8fafc !important;
+}
+
+body[data-theme="dark"] .dash-card:active { background: #334155 !important; }
+
+/* 3. KALENDER HEADER & DAY-CELL DARK MODE */
+body[data-theme="dark"] .calendar-header {
+  background: linear-gradient(135deg, #134e4a 0%, #1e293b 100%) !important;
+  border-color: #0d9488 !important;
+  color: #2dd4bf !important;
+}
+
+body[data-theme="dark"] .calendar-weekdays span {
+  background: #0f172a !important;
+  border-color: #334155 !important;
+  color: #94a3b8 !important;
+}
+
+body[data-theme="dark"] .calendar-weekdays span:nth-child(6),
+body[data-theme="dark"] .calendar-weekdays span:nth-child(7) {
+  background: #450a0a !important;
+  border-color: #881337 !important;
+  color: #f87171 !important;
+}
+
+body[data-theme="dark"] .day-cell {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+body[data-theme="dark"] .day-num {
+  color: #f8fafc !important;
+}
+
+body[data-theme="dark"] .day-cell.other-month {
+  background: #0f172a !important;
+  opacity: 0.35;
+}
+
+body[data-theme="dark"] .day-cell.has-data {
+  background: linear-gradient(180deg, #064e3b 0%, #022c22 100%) !important;
+  border-color: #10b981 !important;
+}
+
+body[data-theme="dark"] .day-cell.is-libur {
+  background: linear-gradient(180deg, #450a0a 0%, #1f0202 100%) !important;
+  border-color: #f87171 !important;
+}
+
+body[data-theme="dark"] .day-cell.is-today {
+  border-color: var(--amber) !important;
+  background: linear-gradient(180deg, #78350f 0%, #451a03 100%) !important;
+  box-shadow: 0 0 14px rgba(245, 158, 11, 0.4) !important;
+}
+
+body[data-theme="dark"] .day-cell.is-today .day-num {
+  color: #fef3c7 !important;
+}
+
+/* 4. REKAP FOOTER CARDS & LEGEND DARK MODE */
+body[data-theme="dark"] .rekap-footer-card {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+  color: #f8fafc !important;
+}
+
+body[data-theme="dark"] .rekap-footer-card.accent-border {
+  border-color: var(--accent) !important;
+  background: #064e3b !important;
+}
+
+body[data-theme="dark"] .rekap-footer-title {
+  color: #5eead4 !important;
+}
+
+body[data-theme="dark"] .holiday-legend-box {
+  background: #1e293b !important;
+  border-color: #b45309 !important;
+  color: #f8fafc !important;
+}
+
+/* 5. TABEL MATRIKS DARK MODE */
+body[data-theme="dark"] .matrix-table th, 
+body[data-theme="dark"] .matrix-table td {
+  background: #1e293b !important;
+  color: #f8fafc !important;
+  border-color: #334155 !important;
+}
+
+body[data-theme="dark"] .matrix-table thead tr:first-child th:nth-child(1),
+body[data-theme="dark"] .matrix-table thead tr:first-child th:nth-child(2),
+body[data-theme="dark"] .matrix-table tbody td:nth-child(1),
+body[data-theme="dark"] .matrix-table tbody td:nth-child(2) {
+  background: #0f172a !important;
+}
+
+/* 6. TOMBOL SEKUNDER & PILL DARK MODE */
+body[data-theme="dark"] .btn.secondary {
+  background: linear-gradient(135deg, #334155 0%, #1e293b 100%) !important;
+  color: #f8fafc !important;
+  border-color: #475569 !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+body[data-theme="dark"] #lblClassSelect,
+body[data-theme="dark"] #lblSubjectSelect,
+body[data-theme="dark"] #lblKepsekSelect,
+body[data-theme="dark"] #lblGuruSelect,
+body[data-theme="dark"] #lblTengahSelect {
+  color: #f8fafc !important;
+}
+
+body[data-theme="dark"] .btn-pill {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%) !important;
+  color: #94a3b8 !important;
+  border-color: #334155 !important;
+}
+
+body[data-theme="dark"] .jadwal-day-btn {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%) !important;
+  border-color: #334155 !important;
+  color: #94a3b8 !important;
+}
+
+body[data-theme="dark"] .icon-btn {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%) !important;
+  border-color: #334155 !important;
+  color: #f8fafc !important;
+}
+
+body[data-theme="dark"] .modal-close {
+  background: linear-gradient(135deg, #334155 0%, #1e293b 100%) !important;
+  color: #f8fafc !important;
+  border-color: #475569 !important;
+}
+
+body[data-theme="dark"] .modal-box {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+}
+
+body[data-theme="dark"] .modal-header, 
+body[data-theme="dark"] .modal-footer {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+}
+
+/* 7. TOMBOL PEMILIH TEMA DARK MODE */
+.theme-btn-group {
+  display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px;
+}
+
+.theme-btn {
+  flex: 1; min-width: 65px; padding: 10px 8px; border-radius: 10px; border: 1.5px solid var(--line);
+  font-size: 11.5px; font-weight: 800; cursor: pointer; text-align: center;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); color: var(--ink);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.theme-btn:active { transform: scale(0.94); }
+.theme-btn.active {
+  border-color: var(--accent);
+  background: linear-gradient(135deg, var(--accent-light) 0%, #ffffff 100%);
+  color: var(--accent-dark);
+  box-shadow: 0 4px 12px rgba(15, 118, 110, 0.25), inset 0 1px 0 #ffffff;
+}
+
+body[data-theme="dark"] .theme-btn {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%) !important;
+  border-color: #334155 !important;
+  color: #f8fafc !important;
+}
+
+body[data-theme="dark"] .theme-btn.active {
+  border-color: var(--accent) !important;
+  background: linear-gradient(135deg, var(--accent-dark) 0%, #0f172a 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(20, 184, 166, 0.35) !important;
+}

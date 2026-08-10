@@ -1,0 +1,41 @@
+/* ==========================================================================
+   DESIGN SYSTEM REFRESH - MODERN, CLEAN, SOFT & MOBILE ERGONOMIC
+   ========================================================================== */
+
+:root {
+  --ink: #0f172a;
+  --paper: #f8fafc;
+  --panel: #ffffff;
+  --line: #e2e8f0;
+  --accent: #0f766e;
+  --accent-dark: #115e59;
+  --accent-light: #ccfbf1;
+  --amber: #d97706;
+  --danger: #dc2626;
+  --info: #0284c7;
+  --muted: #64748b;
+  --radius: 14px;
+  --shadow: 0 4px 14px -2px rgba(15, 23, 42, 0.05), 0 2px 6px -1px rgba(15, 23, 42, 0.03);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  padding-bottom: 95px !important;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body.modal-open {
+  overflow: hidden !important;
+  touch-action: none;
+}
