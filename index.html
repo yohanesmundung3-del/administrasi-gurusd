@@ -1,0 +1,1735 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aplikasi Absensi &amp; Administrasi Guru SD</title>
+<!-- PWA Manifest Data URI Dinamis untuk Fitur Install di HP -->
+<link id="pwaManifestLink" rel="manifest" href='data:application/manifest+json,{"name":"Absensi Siswa","short_name":"Absensi","start_url":".","display":"standalone","background_color":"#1f4d40","theme_color":"#1f4d40","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/2641/2641409.png","sizes":"512x512","type":"image/png"}]}'>
+<!-- Library jsPDF, AutoTable, dan SheetJS (Excel .xlsx) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link rel="stylesheet" href="css/variables.css">
+<link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/calendar-matrix.css">
+<link rel="stylesheet" href="css/themes.css">
+<link rel="stylesheet" href="css/bottom-nav.css">
+</head>
+<body>
+
+<header class="app-bar">
+  <h1 class="hdr-welcome" id="hdrGreeting">👋 Welcome, Guru Kelas</h1>
+  <p class="hdr-sekolah" id="hdrSekolah">SD Negeri ...</p>
+  <div class="hdr-clock-badge">
+    <span>🕒</span>
+    <span id="hdrClockText">Loading...</span>
+  </div>
+</header>
+
+<div class="wrap">
+  <!-- ==========================================================================
+       HALAMAN UTAMA: HOME DASHBOARD LAUNCHER & WIDGET JADWAL MENGAJAR
+       ========================================================================== -->
+  <div class="view-screen active" id="viewDashboard">
+    <div style="text-align:center; margin-bottom:12px;">
+      <h2 style="font-size:15px; font-weight:700; color:var(--accent-dark); margin:0;">Menu Utama Aplikasi</h2>
+      <p class="hint">Pilih salah satu menu di bawah ini untuk memulai:</p>
+    </div>
+    
+    <!-- WIDGET HIGHLIGHT AKTIVITAS HARI INI -->
+    <div class="today-widget-card" id="todaySummaryWidget">
+      <!-- Ditampilkan & dihitung otomatis via JS -->
+    </div>
+
+    <div class="dashboard-grid">
+      <div class="dash-card" onclick="openModule('viewHarian')">
+        <div class="dash-icon">
+          <div class="mini-cal-icon">
+            <div class="mini-cal-header" id="dashIconMonth">JUL</div>
+            <div class="mini-cal-body" id="dashIconDay">28</div>
+          </div>
+        </div>
+        <div class="dash-title">Presensi Harian</div>
+        <div class="dash-sub">Absen cepat per tanggal &amp; kelas</div>
+      </div>
+
+      <div class="dash-card" onclick="openModule('viewRekap')">
+        <div class="dash-icon">📊</div>
+        <div class="dash-title">Rekap Bulanan</div>
+        <div class="dash-sub">Matriks &amp; statistik % kehadiran</div>
+      </div>
+
+      <div class="dash-card" onclick="openModule('viewSiswa')">
+        <div class="dash-icon">👥</div>
+        <div class="dash-title">Data Siswa</div>
+        <div class="dash-sub">Kelola daftar murid per kelas</div>
+      </div>
+
+      <div class="dash-card" onclick="openModule('viewConfig')">
+        <div class="dash-icon">⚙️</div>
+        <div class="dash-title">Pengaturan &amp; PDF</div>
+        <div class="dash-sub">Profil, kertas F4/A4 &amp; ttd</div>
+      </div>
+
+      <div class="dash-card" onclick="openModule('viewPenilaian')">
+        <div class="dash-icon">📝</div>
+        <div class="dash-title">Penilaian Mapel</div>
+        <div class="dash-sub">Asesmen Sumatif &amp; Rapor Kurmer</div>
+      </div>
+
+      <div class="dash-card" onclick="openModule('viewSoalUjian')">
+        <div class="dash-icon">📖</div>
+        <div class="dash-title">Soal Ujian</div>
+        <div class="dash-sub">Bank &amp; Pembuat Naskah Soal</div>
+      </div>
+    </div>
+
+    <!-- WIDGET JADWAL MENGAJAR GURU -->
+    <div class="jadwal-widget-card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <h3 class="sub-card-title" style="margin:0;">📋 Jadwal Mengajar Guru</h3>
+        <button type="button" class="btn secondary" style="padding:4px 8px; font-size:11px;" onclick="openManageJadwalModal()">✏️ Kelola Jadwal</button>
+      </div>
+      <!-- Tab Navigasi Hari -->
+      <div class="jadwal-day-tabs" id="jadwalDayTabsContainer"></div>
+      <div id="jadwalContentContainer"></div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODUL 1: PRESENSI HARIAN MODE KALENDER
+       ========================================================================== -->
+  <div class="view-screen" id="viewHarian">
+    <div class="view-header-bar" style="flex-wrap:wrap; gap:6px;">
+      <button type="button" class="btn ghost" style="padding:5px 10px; font-size:11.5px;" onclick="showDashboard()">🏠 Menu Utama</button>
+      <span style="font-size:13px; font-weight:700; color:var(--accent-dark);">📅 Presensi Harian</span>
+      <button type="button" class="btn primary" style="padding:5px 10px; font-size:11px;" onclick="printFromHarian()">📄 Cetak PDF Bulan Ini</button>
+    </div>
+
+    <div class="calendar-card">
+      <div class="calendar-header" id="calendarHeader">Bulan Tahun</div>
+      <div class="calendar-weekdays">
+        <span>Sen</span><span>Sel</span><span>Rab</span><span>Kam</span><span>Jum</span><span>Sab</span><span>Ming</span>
+      </div>
+      
+      <div class="calendar-track-wrapper">
+        <div class="calendar-track" id="calendarTrack">
+          <div class="calendar-days" id="prevMonthDays"></div>
+          <div class="calendar-days" id="currentMonthDays"></div>
+          <div class="calendar-days" id="nextMonthDays"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="calendarHolidayLegend" class="holiday-legend-box" style="display:none;">
+      <div class="holiday-legend-title">📌 Catatan Hari Libur Bulan Ini:</div>
+      <div id="calendarHolidayList"></div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODUL 2: REKAP BULANAN & MATRIKS
+       ========================================================================== -->
+  <div class="view-screen" id="viewRekap">
+    <div class="view-header-bar" style="flex-wrap:wrap; gap:6px;">
+      <button type="button" class="btn ghost" style="padding:5px 10px; font-size:11.5px;" onclick="showDashboard()">🏠 Menu Utama</button>
+      <span style="font-size:13px; font-weight:700; color:var(--accent-dark);">📊 Rekap Bulanan &amp; Semester</span>
+      <div style="display:flex; gap:6px;">
+        <button type="button" class="btn secondary" style="padding:5px 8px; font-size:11px; background:#e8f5e9; color:#2e7d32; border-color:#a5d6a7;" onclick="exportToExcel()">📈 Excel (.xlsx)</button>
+        <button type="button" class="btn primary" style="padding:5px 10px; font-size:11px;" onclick="printFromRekap()">📄 Cetak PDF Rekap</button>
+      </div>
+    </div>
+
+    <!-- TOMBOL FILTER LAPORAN POPUP REKAP -->
+    <div style="margin-bottom:12px;">
+      <button type="button" class="btn secondary" style="width:100%; justify-content:space-between; display:flex; align-items:center; padding:10px 14px; background:var(--panel); border:1.5px solid var(--accent); border-radius:var(--radius); font-weight:700; color:var(--accent-dark); box-shadow:var(--shadow);" onclick="openFilterRekapModal()">
+        <span id="rekapFilterBadgeText">📋 Filter Laporan: Rekap Bulanan | Kelas 4 | Juli 2026</span>
+        <span style="font-size:12px;">🔍</span>
+      </button>
+    </div>
+
+    <!-- Widget Statistik -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-num" id="stTotalSiswa">0</div>
+        <div class="stat-label">Total Siswa</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" id="stRataHadir" style="color:var(--accent);">0%</div>
+        <div class="stat-label">Rata Kehadiran</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" id="stTotalAbsen" style="color:var(--danger);">0</div>
+        <div class="stat-label">Total Absen (S/I/A)</div>
+      </div>
+      <div class="stat-card" style="border-color:#f5c2c2; background:#fde8e8;">
+        <div class="stat-num" id="stWarningSiswa" style="color:var(--danger);">0</div>
+        <div class="stat-label" style="color:var(--danger);">⚠️ Perlu Pembinaan</div>
+      </div>
+    </div>
+
+    <!-- Tabel Matriks Bulanan Preview -->
+    <div class="sub-card">
+      <h3 class="sub-card-title" style="margin-bottom:6px;">📊 Matriks Kehadiran Bulan Ini</h3>
+      <p class="hint" style="margin-bottom:8px;">
+          <b>Nama siswa otomatis terurut A sampai Z.</b> Klik sel tanggal untuk mengedit.
+      </p>
+      <div class="matrix-wrapper" id="monthlyMatrixWrapper">
+        <table class="matrix-table" id="monthlyMatrixTable">
+          <!-- Tabel Matriks Digambar Otomatis via JS -->
+        </table>
+      </div>
+
+      <div class="rekap-footer-grid">
+        <div class="rekap-footer-card accent-border">
+          <div class="rekap-footer-title">👥 Rekap Jumlah Siswa:</div>
+          <div id="rekapStudentStatsContent"></div>
+        </div>
+        <div class="rekap-footer-card">
+          <div class="rekap-footer-title" style="color:var(--amber);">📌 Catatan Hari Libur:</div>
+          <div id="rekapHolidayLegendContent"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODUL 3: DATA SISWA
+       ========================================================================== -->
+  <div class="view-screen" id="viewSiswa">
+    <div class="view-header-bar" style="flex-wrap:wrap; gap:6px;">
+      <button type="button" class="btn ghost" style="padding:5px 10px; font-size:11.5px;" onclick="showDashboard()">🏠 Menu Utama</button>
+      <span style="font-size:13px; font-weight:700; color:var(--accent-dark);">👥 Kelola Data Siswa</span>
+      <button type="button" class="btn primary" style="padding:5px 10px; font-size:11px;" onclick="printStudentsListPdf()">📄 Cetak Form Kosong</button>
+    </div>
+
+    <div class="sub-card">
+      <div class="field" style="margin:0;">
+        <label><b>Pilih Kelas Yang Dikelola:</b></label>
+        <select id="manageClassSelect" onchange="renderStudentsList()">
+          <option value="Kelas 1">Kelas 1</option>
+          <option value="Kelas 2">Kelas 2</option>
+          <option value="Kelas 3">Kelas 3</option>
+          <option value="Kelas 4" selected>Kelas 4</option>
+          <option value="Kelas 5">Kelas 5</option>
+          <option value="Kelas 6">Kelas 6</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- TOMBOL POPUP AKSI DATA SISWA -->
+    <div class="row2" style="margin-bottom:12px;">
+      <button type="button" class="btn primary" style="padding:11px;" onclick="openAddStudentModal()">
+          ➕ Tambah Siswa Baru
+      </button>
+      <button type="button" class="btn secondary" style="padding:11px;" onclick="openImportStudentsModal()">
+          📥 Impor Banyak Siswa
+      </button>
+    </div>
+
+    <div class="sub-card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:8px;">
+        <h3 class="sub-card-title" style="margin:0;">
+          <span>📋 Daftar Siswa (<span id="countStudentText">0</span>) - 🔤 Urut A-Z</span>
+        </h3>
+        <button type="button" onclick="confirmDeleteAllStudents()" class="icon-btn danger" style="font-size:10.5px;">🗑️ Hapus Kelas Ini</button>
+      </div>
+      <div class="search-box">
+        <input type="text" id="searchStudentInput" placeholder="Cari nama siswa / NISN..." oninput="renderStudentsList()">
+      </div>
+      <div id="studentsListContainer"></div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODUL 4: PENGATURAN
+       ========================================================================== -->
+  <div class="view-screen" id="viewConfig">
+    <div class="view-header-bar" style="flex-wrap:wrap; gap:6px;">
+      <button type="button" class="btn ghost" style="padding:5px 10px; font-size:11.5px;" onclick="showDashboard()">🏠 Menu Utama</button>
+      <span style="font-size:13px; font-weight:700; color:var(--accent-dark);">⚙️ Pengaturan &amp; PDF</span>
+    </div>
+
+    <div class="cfg-subtab-bar">
+      <button type="button" class="cfg-subtab-btn active" onclick="switchCfgSubTab('cfgPanelProfil')">👤 Profil &amp; TTD</button>
+      <button type="button" class="cfg-subtab-btn" onclick="switchCfgSubTab('cfgPanelLayout')">📄 Format PDF</button>
+      <button type="button" class="cfg-subtab-btn" onclick="switchCfgSubTab('cfgPanelKolom')">📐 Lebar Kolom</button>
+      <button type="button" class="cfg-subtab-btn" onclick="switchCfgSubTab('cfgPanelPwaKaldik')">📲 PWA &amp; Kaldik</button>
+      <button type="button" class="cfg-subtab-btn" onclick="switchCfgSubTab('cfgPanelLog')">📜 Log &amp; Backup</button>
+      <button type="button" class="cfg-subtab-btn" onclick="switchCfgSubTab('cfgPanelGuruMapel')">👨‍🏫 Guru &amp; Mapel</button>
+    </div>
+
+    <div class="cfg-subtab-panel active" id="cfgPanelProfil">
+      <!-- KARTU PEMILIH TEMA WARNA & DARK MODE -->
+      <div class="sub-card">
+        <h3 class="sub-card-title" style="margin-bottom:8px;">🎨 Tema Warna &amp; Tampilan Aplikasi</h3>
+        <p class="hint" style="margin-top:0; margin-bottom:8px;">Pilih kombinasi warna atau Mode Gelap sesuai kenyamanan mata Anda:</p>
+        <div class="theme-btn-group">
+          <button type="button" class="theme-btn active" id="btnThemeTeal" onclick="applyTheme('teal')">🌿 Teal</button>
+          <button type="button" class="theme-btn" id="btnThemeNavy" onclick="applyTheme('navy')">🌊 Navy</button>
+          <button type="button" class="theme-btn" id="btnThemeMaroon" onclick="applyTheme('maroon')">🍷 Maroon</button>
+          <button type="button" class="theme-btn" id="btnThemePurple" onclick="applyTheme('purple')">🔮 Purple</button>
+          <button type="button" class="theme-btn" id="btnThemeDark" onclick="applyTheme('dark')">🌙 Dark</button>
+        </div>
+      </div>
+
+      <div class="sub-card">
+        <h3 class="sub-card-title" style="margin-bottom:10px;">🏫 Data Profil Sekolah &amp; Laporan</h3>
+        <div class="row2">
+          <div class="field">
+            <label>Semester</label>
+            <select id="mSemester">
+              <option value="Ganjil">Ganjil</option>
+              <option value="Genap">Genap</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Tahun Pelajaran</label>
+            <input type="text" id="mTahunAjaran" placeholder="2026/2027">
+          </div>
+        </div>
+
+        <div class="row2">
+          <div class="field">
+            <label>Bulan Laporan</label>
+            <select id="mBulan" onchange="renderCalendarUI()">
+              <option>Januari</option><option>Februari</option><option>Maret</option>
+              <option>April</option><option>Mei</option><option>Juni</option>
+              <option>Juli</option><option>Agustus</option><option>September</option>
+              <option>Oktober</option><option>November</option><option>Desember</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Tahun</label>
+            <input type="number" id="mTahun" placeholder="2026" onchange="renderCalendarUI()">
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Nama Sekolah</label>
+          <input type="text" id="mSekolah" placeholder="SD Negeri ...">
+        </div>
+        
+        <div class="row2">
+          <div class="field">
+            <label>Pilih Kelas / Fase Cetak</label>
+            <button type="button" class="btn secondary" style="width:100%; text-align:left; justify-content:space-between; display:flex; align-items:center; background:#fffdf9; border:1px solid var(--line); font-weight:normal;" onclick="openClassPicker()">
+              <span id="lblClassSelect" style="color:var(--ink);">-- Pilih dari Daftar Kelas --</span>
+              <span style="color:var(--accent-dark); font-size:11px;">🔍</span>
+            </button>
+            <input type="text" id="mKelas" placeholder="Kelas IV / Fase B" style="margin-top:4px;">
+          </div>
+          <div class="field">
+            <label>Pilih Mata Pelajaran Laporan</label>
+            <button type="button" class="btn secondary" style="width:100%; text-align:left; justify-content:space-between; display:flex; align-items:center; background:#fffdf9; border:1px solid var(--line); font-weight:normal;" onclick="openSubjectPicker()">
+              <span id="lblSubjectSelect" style="color:var(--ink);">-- Pilih Mapel Tersimpan --</span>
+              <span style="color:var(--accent-dark); font-size:11px;">🔍</span>
+            </button>
+            <input type="text" id="mMapel" placeholder="Semua Mapel / Tematik" style="margin-top:4px;">
+          </div>
+        </div>
+      </div>
+
+      <div class="sub-card">
+        <h3 class="sub-card-title" style="margin-bottom:10px;">✍️ Pengesahan Tanda Tangan</h3>
+        
+        <div class="field">
+          <label>Jumlah Tanda Tangan Pengesahan</label>
+          <select id="mJumlahTtd" onchange="toggleTtdFieldsUI()">
+            <option value="2" selected>2 Tanda Tangan (Kiri &amp; Kanan)</option>
+            <option value="3">3 Tanda Tangan (Kiri &amp; Kanan Atas, Tengah Kebawah)</option>
+          </select>
+        </div>
+
+        <!-- PEMILIH GURU KIRI (KEPSEK/ATASAN) CUSTOM MODAL -->
+        <div style="background:#f0f5f2; border:1px solid var(--accent); border-radius:8px; padding:8px; margin-bottom:10px;">
+          <label style="font-size:11px; font-weight:700; color:var(--accent-dark);">👔 Pilih Atasan / Kepsek (Kiri):</label>
+          <button type="button" class="btn secondary" style="width:100%; text-align:left; justify-content:space-between; display:flex; align-items:center; background:#fff; margin-top:4px;" onclick="openTeacherPicker('left')">
+            <span id="lblKepsekSelect" style="color:var(--ink);">-- Pilih dari Daftar Guru Tersimpan --</span>
+            <span style="color:var(--accent-dark); font-size:11px;">🔍</span>
+          </button>
+        </div>
+
+        <div class="row2">
+          <div class="field">
+            <label>Jabatan Penanda Tangan Kiri</label>
+            <input type="text" id="mJabatanKiri" placeholder="Kepala Sekolah">
+          </div>
+          <div class="field">
+            <label>Nama Atasan / Kepsek (Kiri)</label>
+            <input type="text" id="mKepsek" placeholder="Nama Kepsek, M.Pd.">
+          </div>
+        </div>
+
+        <div class="field">
+          <label>NIP Atasan / Kepsek (Kiri)</label>
+          <input type="text" id="mNipKepsek" placeholder="19750101 ...">
+        </div>
+
+        <hr style="border:none; border-top:1px dashed var(--line); margin:12px 0;">
+
+        <!-- PEMILIH GURU KANAN (GURU/WALI KELAS) CUSTOM MODAL -->
+        <div style="background:#f0f5f2; border:1px solid var(--accent); border-radius:8px; padding:8px; margin-bottom:10px;">
+          <label style="font-size:11px; font-weight:700; color:var(--accent-dark);">👨‍🏫 Pilih Guru / Wali Kelas (Kanan):</label>
+          <button type="button" class="btn secondary" style="width:100%; text-align:left; justify-content:space-between; display:flex; align-items:center; background:#fff; margin-top:4px;" onclick="openTeacherPicker('right')">
+            <span id="lblGuruSelect" style="color:var(--ink);">-- Pilih dari Daftar Guru Tersimpan --</span>
+            <span style="color:var(--accent-dark); font-size:11px;">🔍</span>
+          </button>
+        </div>
+
+        <div class="row2">
+          <div class="field">
+            <label>Jabatan Penanda Tangan Kanan</label>
+            <input type="text" id="mJabatanKanan" placeholder="Wali Kelas">
+          </div>
+          <div class="field">
+            <label>Nama Wali Kelas / Guru (Kanan)</label>
+            <input type="text" id="mGuru" placeholder="Nama Guru, S.Pd.">
+          </div>
+        </div>
+
+        <div class="field">
+          <label>NIP Wali Kelas / Guru (Kanan)</label>
+          <input type="text" id="mNipGuru" placeholder="19820302 ...">
+        </div>
+
+        <!-- TTD TENGAH (DITAMPILKAN JIKA MEMILIH 3 TTD) -->
+        <div id="ttdTengahBox" style="display:none; background:#fdfbf7; border:1px solid var(--line); border-radius:8px; padding:10px; margin-top:8px;">
+          <h4 style="margin:0 0 8px 0; font-size:12px; color:var(--accent-dark);">✒️ Penanda Tangan Posisi Tengah (Agak Kebawah):</h4>
+          
+          <div style="background:#eef5f1; border:1px solid var(--accent); border-radius:8px; padding:8px; margin-bottom:8px;">
+            <label style="font-size:11px; font-weight:700; color:var(--accent-dark);">👔 Pilih Penanda Tangan Tengah:</label>
+            <button type="button" class="btn secondary" style="width:100%; text-align:left; justify-content:space-between; display:flex; align-items:center; background:#fff; margin-top:4px;" onclick="openTeacherPicker('center')">
+              <span id="lblTengahSelect" style="color:var(--ink);">-- Pilih dari Daftar Guru Tersimpan --</span>
+              <span style="color:var(--accent-dark); font-size:11px;">🔍</span>
+            </button>
+          </div>
+
+          <div class="field">
+            <label>Jabatan Penanda Tangan Tengah</label>
+            <input type="text" id="mJabatanTengah" placeholder="Contoh: Guru Mata Pelajaran / BK">
+          </div>
+
+          <div class="row2">
+            <div class="field">
+              <label>Nama Penanda Tangan Tengah</label>
+              <input type="text" id="mNamaTengah" placeholder="Nama Guru Tengah, S.Pd.">
+            </div>
+            <div class="field">
+              <label>NIP Penanda Tangan Tengah</label>
+              <input type="text" id="mNipTengah" placeholder="19850505 ...">
+            </div>
+          </div>
+        </div>
+
+        <div class="row2" style="margin-top:10px;">
+          <div class="field">
+            <label>Kota / Tempat Laporan</label>
+            <input type="text" id="mKota" placeholder="Contoh: Manado">
+          </div>
+          <!-- PEMILIH KALENDER TANGGAL TTD (BEBAS KOSONG) -->
+          <div class="field">
+            <label>Pilih Tanggal TTD (Kalender)</label>
+            <input type="date" id="mTglTtdPicker" onchange="selectDateTtdFromCalendar(this.value)">
+            <input type="text" id="mTglTtd" placeholder="Bisa dikosongkan atau ketik manual..." style="margin-top:4px;" oninput="syncManualTtdDate(this.value)">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cfg-subtab-panel" id="cfgPanelLayout">
+      <div class="sub-card">
+        <h3 class="sub-card-title" style="margin-bottom:10px;">📐 Pengaturan Kertas &amp; Font PDF</h3>
+        <div class="row2">
+          <div class="field">
+            <label>Ukuran Kertas</label>
+            <select id="cfgPaper">
+              <option value="f4" selected>F4 / Folio (215 x 330 mm)</option>
+              <option value="a4">A4 (210 x 297 mm)</option>
+              <option value="letter">Letter</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Orientasi Halaman</label>
+            <select id="cfgOrientation">
+              <option value="landscape" selected>Landscape (Mendatar)</option>
+              <option value="portrait">Portrait (Tegak)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row2">
+          <div class="field">
+            <label>Jenis Font PDF</label>
+            <select id="cfgFont">
+              <option value="helvetica" selected>Helvetica / Arial (Standar)</option>
+              <option value="times">Times New Roman</option>
+              <option value="courier">Courier (Monospace)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Ukuran Font Teks (pt)</label>
+            <select id="cfgFontSize">
+              <option value="8">8 pt</option>
+              <option value="9">9 pt (Standar Presisi)</option>
+              <option value="10" selected>10 pt</option>
+              <option value="11">11 pt</option>
+              <option value="12">12 pt</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row2">
+          <div class="field">
+            <label>Tinggi Baris Data Siswa (mm)</label>
+            <input type="number" id="cfgRowHeight" value="5" min="4" max="15" step="0.5" placeholder="Default: 5 mm">
+          </div>
+          <div class="field">
+            <label>Margin Halaman (mm)</label>
+            <input type="number" id="cfgMargin" value="20" min="5" max="30">
+          </div>
+        </div>
+
+        <div style="background:#fdfbf7; border:1px solid var(--line); border-radius:8px; padding:10px; margin-top:10px;">
+          <label style="font-size:12px; font-weight:700; color:var(--accent-dark); display:block; margin-bottom:6px;">
+            Tampilan Kolom Dokumen PDF:
+          </label>
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            <label class="chk-label"><input type="checkbox" id="pdfShowNis" checked onchange="savePdfColConfig()"> Tampilkan Kolom NISN/NIS</label>
+            <label class="chk-label"><input type="checkbox" id="pdfShowPct" onchange="savePdfColConfig()"> Tampilkan Kolom % Persentase Kehadiran</label>
+            <label class="chk-label"><input type="checkbox" id="pdfShowKet" onchange="savePdfColConfig()"> Tampilkan Kolom Keterangan Tambahan</label>
+          </div>
+        </div>
+
+        <div class="field" style="margin-top:10px;">
+          <label class="chk-label" style="background:#eef5f1; padding:9px 12px; border-radius:8px; border:1px solid var(--accent); color:var(--accent-dark);">
+            <input type="checkbox" id="cfgShowSignature" checked>
+            <b>Tampilkan Lembar Tanda Tangan Pengesahan</b>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUB-TAB 3: LEBAR KOLOM PDF TERPISAH PER LAPORAN -->
+    <div class="cfg-subtab-panel" id="cfgPanelKolom">
+      <div class="sub-card">
+        <h3 class="sub-card-title" style="margin-bottom:10px;">📐 Lebar Masing-Masing Kolom PDF (mm)</h3>
+        <p class="hint" style="margin-top:0; margin-bottom:10px;">
+          Pilih jenis laporan di bawah ini untuk mengatur lebar milimeter kolom tabelnya (Dibiarkan kosong = Auto Fill sisa kertas):
+        </p>
+        
+        <div class="field" style="margin-bottom:14px;">
+          <label><b>Pilih Jenis Laporan PDF Untuk Diatur Lebar Kolomnya:</b></label>
+          <select id="cfgColReportTypeSelect" onchange="switchColConfigPanelUI(this.value)">
+            <option value="bulanan" selected>📅 Laporan Absensi Bulanan (31 Tanggal)</option>
+            <option value="semester">📊 Laporan Absensi 1 Semester (6 Bulan)</option>
+            <option value="tahunan">📈 Laporan Absensi 1 Tahun Ajaran (12 Bulan)</option>
+            <option value="penilaian">📝 Leger Nilai Asesmen Mapel (Kurikulum Merdeka)</option>
+          </select>
+        </div>
+
+        <!-- PANEL 1: ABSENSI BULANAN -->
+        <div id="cfgColPanelBulanan" class="cfg-col-panel" style="display:block;">
+          <div class="row3">
+            <div class="field">
+              <label>Lebar Kolom No (mm)</label>
+              <input type="number" id="cfgColWidthNo" value="7" min="4" max="15" step="0.5" oninput="savePdfColWidthsConfig()">
+            </div>
+            <div class="field">
+              <label>Lebar NISN/NIS (mm)</label>
+              <input type="number" id="cfgColWidthNis" value="25" min="10" max="35" step="0.5" oninput="savePdfColWidthsConfig()">
+            </div>
+            <div class="field">
+              <label>Lebar Nama Siswa (mm)</label>
+              <input type="number" id="cfgColWidthNama" placeholder="Kosong = Auto" min="10" max="150" step="0.5" oninput="savePdfColWidthsConfig()">
+            </div>
+          </div>
+          <div class="row3">
+            <div class="field">
+              <label>Lebar L/P (mm)</label>
+              <input type="number" id="cfgColWidthJk" value="8" min="5" max="15" step="0.5" oninput="savePdfColWidthsConfig()">
+            </div>
+            <div class="field">
+              <label>Lebar Tanggal 1-31 (mm)</label>
+              <input type="number" id="cfgColWidthTanggal" value="5" min="3.5" max="8.0" step="0.1" oninput="savePdfColWidthsConfig()">
+            </div>
+            <div class="field">
+              <label>Lebar Rekap H/S/I/A (mm)</label>
+              <input type="number" id="cfgColWidthRekap" value="6.5" min="4.0" max="10.0" step="0.1" oninput="savePdfColWidthsConfig()">
+            </div>
+          </div>
+          <div class="row2">
+            <div class="field">
+              <label>Lebar % (mm)</label>
+              <input type="number" id="cfgColWidthPct" value="9.5" min="6.0" max="15.0" step="0.5" oninput="savePdfColWidthsConfig()">
+            </div>
+            <div class="field">
+              <label>Lebar Kolom Keterangan (mm)</label>
+              <input type="number" id="cfgColWidthKet" value="11" min="8.0" max="25.0" step="0.5" oninput="savePdfColWidthsConfig()">
+            </div>
+          </div>
+        </div>
+
+        <!-- PANEL 2: ABSENSI 1 SEMESTER -->
+        <div id="cfgColPanelSemester" class="cfg-col-panel" style="display:none;">
+          <div class="row3">
+            <div class="field">
+              <label>Lebar Kolom No (mm)</label>
+              <input type="number" id="cfgSemColWidthNo" value="7" min="4" max="15" step="0.5" oninput="savePdfColWidthsConfig()">
+            </div>
+            <div class="field">
+              <label>Lebar NISN/NIS (mm)</label>
+              <input type="number" id="cfgSemColWidthNis" value="25" min="10" max="35" step="0.5" oninput="savePdfColWidthsConfig()">
+            </div>
+            <div class="field">
+              <label>Lebar Nama Siswa (mm)</label>
+              <input type="number" id="cfgSemColWidthNama" placeholder="Kosong = Auto" min="10" max="150" step="0.5" oninput="savePdfColWidthsConfig()">
+            </div>
+          </div>
+          <div class="row3">
+            <div class="field">
+              <label>Lebar L/P (mm)</label>
+              <input type="number" id="cfgSemColWidthJk" value="8" min="5" max="15" step="0.5" oninput="savePdfColWidthsConfig()">
+            </div>
+            <div class="field">
+              <label>Lebar Per Bulan / 6 Bulan (mm)</label>
+              <input type="number" id="cfgSemColWidthBulan" value="15" min="8" max="30" step="0.5" oninput="savePdfColWidthsConfig()">
+            </div>
+            <div class="field">
+              <label>Lebar Total Rekap H/S/I/A (mm)</label>
+              <input type="number" id="cfgSemColWidthRekap" value="6.5" min="4" max="12" step="0.5" oninput="savePdfColWidthsConfig()">
+            </div>
+          </div>
+          <div class="field">
+            <label>Lebar % Total Kehadiran (mm)</label>
+            <input type="number" id="cfgSemColWidthPct" value="11" min="6" max="20" step="0.5" oninput="savePdfColWidthsConfig()">
+          </div>
+        </div>
+
+        <!-- PANEL 3: ABSENSI 1 TAHUN AJARAN -->
+        <div id="cfgColPanelTahunan" class="cfg-col-panel" style="display:none;">
+          <div class="row3">
+            <div class="field">
+              <label>Lebar Kolom No (mm)</label>
+              <input type="number" id="cfgTahColWidthNo" value="7" min="4" max="15" step="0.5" oninput="savePdfColWidthsConfig()">
+            </div>
+            <div class="field">
+              <label>Lebar NISN/NIS (mm)</label>
+              <input type="number" id="cfgTahColWidthNis" value="25" min="10" max="35" step="0.5" oninput="savePdfColWidthsConfig()">
+            </div>
+            <div class="field">
+              <label>Lebar Nama Siswa (mm)</label>
+              <input type="number" id="cfgTahColWidthNama" placeholder="Kosong = Auto" min="10" max="150" step="0.5" oninput="savePdfColWidthsConfig()">
+            </div>
+          </div>
+          <div class="row3">
+            <div class="field">
+              <label>Lebar L/P (mm)</label>
+              <input type="number" id="cfgTahColWidthJk" value="8" min="5" max="15" step="0.5" oninput="savePdfColWidthsConfig()">
+            </div>
+            <div class="field">
+              <label>Lebar Per Bulan / 12 Bulan (mm)</label>
+              <input type="number" id="cfgTahColWidthBulan" value="11" min="6" max="20" step="0.5" oninput="savePdfColWidthsConfig()">
+            </div>
+            <div class="field">
+              <label>Lebar Total Rekap H/S/I/A (mm)</label>
+              <input type="number" id="cfgTahColWidthRekap" value="6.5" min="4" max="12" step="0.5" oninput="savePdfColWidthsConfig()">
+            </div>
+          </div>
+          <div class="field">
+            <label>Lebar % Total Kehadiran (mm)</label>
+            <input type="number" id="cfgTahColWidthPct" value="11" min="6" max="20" step="0.5" oninput="savePdfColWidthsConfig()">
+          </div>
+        </div>
+
+        <!-- PANEL 4: LEGER NILAI MAPEL -->
+        <div id="cfgColPanelPenilaian" class="cfg-col-panel" style="display:none;">
+          <div class="row3">
+            <div class="field">
+              <label>Lebar Kolom No (mm)</label>
+              <input type="number" id="cfgPenColWidthNo" value="7" min="4" max="15" step="0.5" oninput="savePdfColWidthsConfig()">
+            </div>
+            <div class="field">
+              <label>Lebar NISN/NIS (mm)</label>
+              <input type="number" id="cfgPenColWidthNis" value="25" min="10" max="35" step="0.5" oninput="savePdfColWidthsConfig()">
+            </div>
+            <div class="field">
+              <label>Lebar Nama Siswa (mm)</label>
+              <input type="number" id="cfgPenColWidthNama" placeholder="Kosong = Auto" min="10" max="150" step="0.5" oninput="savePdfColWidthsConfig()">
+            </div>
+          </div>
+          <div class="row3">
+            <div class="field">
+              <label>Lebar L/P (mm)</label>
+              <input type="number" id="cfgPenColWidthJk" value="8" min="5" max="15" step="0.5" oninput="savePdfColWidthsConfig()">
+            </div>
+            <div class="field">
+              <label>Lebar Per TP (mm)</label>
+              <input type="number" id="cfgPenColWidthTp" value="12" min="8" max="25" step="0.5" oninput="savePdfColWidthsConfig()">
+            </div>
+            <div class="field">
+              <label>Lebar Rata SLM / SAS / NA (mm)</label>
+              <input type="number" id="cfgPenColWidthNilai" value="12" min="8" max="20" step="0.5" oninput="savePdfColWidthsConfig()">
+            </div>
+          </div>
+          <div class="field">
+            <label>Lebar Deskripsi Capaian Rapor (mm)</label>
+            <input type="number" id="cfgPenColWidthDeskripsi" placeholder="Kosong = Auto" min="20" max="250" step="1" oninput="savePdfColWidthsConfig()">
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="cfg-subtab-panel" id="cfgPanelPwaKaldik">
+      <div class="sub-card">
+        <h3 class="sub-card-title" style="margin-bottom:8px;">📲 Ikon Aplikasi PWA / Logo Sekolah</h3>
+        <p class="hint" style="margin-top:0;">
+          Masukkan URL link foto logo sekolahmu di bawah ini untuk mengganti ikon aplikasi saat di-install ke layar HP.
+        </p>
+        <div style="display:flex; gap:10px; align-items:center; margin-top:8px;">
+          <img id="pwaIconPreview" src="https://cdn-icons-png.flaticon.com/512/2641/2641409.png" style="width:48px; height:48px; border-radius:10px; border:1px solid var(--line); object-fit:cover;">
+          <div style="flex:1;">
+            <input type="text" id="mPwaIconUrl" placeholder="https://domain.com/logo-sekolah.png" oninput="updatePwaIconFromInput()">
+          </div>
+        </div>
+      </div>
+
+      <div class="sub-card">
+        <h3 class="sub-card-title" style="margin-bottom:8px;">📅 Impor Kalender Pendidikan (Opsi B)</h3>
+        <p class="hint" style="margin-top:0;">
+          Tempelkan daftar tanggal libur tambahan (Format: `YYYY-MM-DD = Keterangan`). Data Opsi B akan <b>menimpa Opsi A (Preset Bawaan Manado)</b>.
+        </p>
+        <textarea id="kaldikImportInput" rows="5" placeholder="2026-08-17 = HUT RI&#10;2026-12-21 s/d 2026-12-31 = Libur Semester 1"></textarea>
+        <div style="display:flex; gap:8px; margin-top:8px;">
+          <button type="button" onclick="saveKaldikImportB()" class="btn secondary">💾 Simpan Kalender Opsi B</button>
+          <button type="button" onclick="resetKaldikImportB()" class="btn ghost" style="color:var(--danger);">🔄 Reset ke Preset A</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="cfg-subtab-panel" id="cfgPanelLog">
+      <div class="sub-card">
+        <h3 class="sub-card-title" style="margin-bottom:8px;">💾 Backup &amp; Pemulihan Data Auto-Save</h3>
+        <p class="hint" style="margin-top:0;">
+          Sistem secara otomatis menyimpan data ke penyimpanan lokal HP/Browser. Anda juga dapat mengunduh salinan berkas `.json` secara manual.
+        </p>
+        <div style="display:flex; gap:8px; margin-top:10px;">
+          <button type="button" onclick="exportJSON()" class="btn primary">📥 Unduh Backup JSON</button>
+          <button type="button" onclick="triggerImport()" class="btn secondary">📤 Pulihkan Data dari JSON</button>
+        </div>
+      </div>
+
+      <div class="sub-card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <h3 class="sub-card-title" style="margin:0;">📜 Riwayat Log Aktivitas Sistem</h3>
+          <button type="button" onclick="clearActivityLog()" class="btn-move" style="color:var(--danger); border-color:#f5c2c2;">🗑️ Bersihkan Log</button>
+        </div>
+        <div id="activityLogListContainer" style="max-height:250px; overflow-y:auto; font-size:11.5px;"></div>
+      </div>
+    </div>
+
+    <div class="cfg-subtab-panel" id="cfgPanelGuruMapel">
+      <!-- KELOLA DAFTAR GURU -->
+      <div class="sub-card">
+        <h3 class="sub-card-title" style="margin-bottom:10px;">👨‍🏫 Kelola Daftar Guru / Pegawai</h3>
+        
+        <div class="field">
+          <label>Nama Lengkap &amp; Gelar Guru</label>
+          <input type="text" id="tgNama" placeholder="Contoh: Ahmad Budi, S.Pd., M.Pd.">
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label>NIP Guru</label>
+            <input type="text" id="tgNip" placeholder="19850101 ...">
+          </div>
+          <div class="field">
+            <label>Jabatan Default</label>
+            <input type="text" id="tgJabatan" placeholder="Wali Kelas / Kepsek / Guru Mapel">
+          </div>
+        </div>
+        <button type="button" onclick="addTeacherItem()" class="btn primary" style="width:100%; margin-bottom:12px;">+ Tambah Ke Daftar Guru</button>
+
+        <h4 style="margin:8px 0 6px 0; font-size:12px; color:var(--accent-dark);">📋 Daftar Guru Tersimpan:</h4>
+        <div id="teacherListContainer"></div>
+      </div>
+
+      <!-- KELOLA DAFTAR MATA PELAJARAN -->
+      <div class="sub-card">
+        <h3 class="sub-card-title" style="margin-bottom:10px;">📚 Kelola Daftar Mata Pelajaran</h3>
+        
+        <div class="field">
+          <label>Nama Mata Pelajaran</label>
+          <div style="display:flex; gap:8px;">
+            <input type="text" id="sjNama" placeholder="Contoh: Matematika / IPAS / Tematik" style="flex:1;">
+            <button type="button" onclick="addSubjectItem()" class="btn primary" style="padding:0 16px;">+ Tambah</button>
+          </div>
+        </div>
+
+        <h4 style="margin:8px 0 6px 0; font-size:12px; color:var(--accent-dark);">📋 Daftar Mata Pelajaran Tersimpan:</h4>
+        <div id="subjectListContainer"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODUL 5: PENILAIAN GURU MAPEL (KURIKULUM MERDEKA SD)
+       ========================================================================== -->
+  <div class="view-screen" id="viewPenilaian">
+    <div class="view-header-bar" style="flex-wrap:wrap; gap:6px;">
+      <button type="button" class="btn ghost" style="padding:5px 10px; font-size:11.5px;" onclick="showDashboard()">🏠 Menu Utama</button>
+      <span style="font-size:13px; font-weight:700; color:var(--accent-dark);">📝 Penilaian Mapel (Kurikulum Merdeka)</span>
+    </div>
+
+    <!-- TOMBOL POPUP AKSI PENILAIAN -->
+    <div style="margin-bottom:12px; display:flex; flex-direction:column; gap:8px;">
+      <button type="button" class="btn secondary" style="width:100%; justify-content:space-between; display:flex; align-items:center; padding:10px 14px; background:var(--panel); border:1.5px solid var(--accent); border-radius:var(--radius); font-weight:700; color:var(--accent-dark); box-shadow:var(--shadow);" onclick="openFilterPenilaianModal()">
+        <span id="penilaianFilterBadgeText">📋 Filter Penilaian: Kelas 4 | Mapel | Genap</span>
+        <span style="font-size:12px;">🔍</span>
+      </button>
+      <button type="button" class="btn primary" style="padding:10px 14px;" onclick="openManageTpModal()">
+          ✏️ Kelola Tujuan Pembelajaran (TP / Bab)
+      </button>
+    </div>
+
+    <!-- Matriks Nilai Sumatif & Rapor -->
+    <div class="sub-card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:6px;">
+        <h3 class="sub-card-title" style="margin:0;">📊 Matriks Nilai Sumatif &amp; Deskripsi Rapor</h3>
+        <div style="display:flex; gap:6px;">
+          <button type="button" class="btn secondary" style="padding:6px 10px; font-size:11px; background:#e8f5e9; color:#2e7d32; border-color:#a5d6a7;" onclick="exportGradesToExcel()">📈 Excel (.xlsx)</button>
+          <button type="button" class="btn primary" style="padding:6px 10px; font-size:11px;" onclick="exportGradesToPdfModalFromModule()">📄 Leger Nilai PDF</button>
+        </div>
+      </div>
+      <p class="hint" style="margin-bottom:8px;">
+          <b>Ketik nilai (0 - 100) langsung pada sel tabel.</b> Rata-rata SLM, Nilai Akhir (NA), dan Teks Deskripsi Capaian akan dihitung otomatis oleh sistem!
+      </p>
+      <div class="matrix-wrapper" id="penilaianMatrixWrapper">
+        <table class="matrix-table" id="penilaianMatrixTable">
+          <!-- Tabel Matriks Penilaian Digambar Otomatis via JS -->
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODUL 6: SOAL UJIAN (BANK & PEMBUAT NASKAH SOAL SD)
+       ========================================================================== -->
+  <div class="view-screen" id="viewSoalUjian">
+    <div class="view-header-bar" style="flex-wrap:wrap; gap:6px;">
+      <button type="button" class="btn ghost" style="padding:5px 10px; font-size:11.5px;" onclick="showDashboard()">🏠 Menu Utama</button>
+      <span style="font-size:13px; font-weight:700; color:var(--accent-dark);">📖 Bank &amp; Pembuat Soal Ujian</span>
+    </div>
+
+    <!-- TOMBOL POPUP AKSI SOAL UJIAN -->
+    <div style="margin-bottom:12px; display:flex; flex-direction:column; gap:8px;">
+      <button type="button" class="btn secondary" style="width:100%; justify-content:space-between; display:flex; align-items:center; padding:10px 14px; background:var(--panel); border:1.5px solid var(--accent); border-radius:var(--radius); font-weight:700; color:var(--accent-dark); box-shadow:var(--shadow);" onclick="openFilterExamModal()">
+        <span id="examFilterBadgeText">📋 Filter Ujian: SAS | Kelas 4 | Mapel | Genap</span>
+        <span style="font-size:12px;">🔍</span>
+      </button>
+
+      <div class="row2">
+        <button type="button" class="btn secondary" style="padding:10px;" onclick="openExamKopModal()">
+            ⚙️ Pengaturan Kop &amp; Waktu
+        </button>
+        <button type="button" class="btn primary" style="padding:10px;" onclick="openAddExamQuestionModal()">
+            ➕ Tambah Butir Soal Baru
+        </button>
+      </div>
+
+      <!-- TOMBOL IMPOR TEKS AI SOAL UJIAN -->
+      <button type="button" class="btn secondary" style="width:100%; border-color:var(--accent); color:var(--accent-dark); background:#f0fdf4; font-weight:800; padding:11px;" onclick="openImportExamAiModal()">
+          🤖 Impor Teks AI / Masal
+      </button>
+    </div>
+
+    <!-- Daftar Naskah Soal & Tombol Cetak PDF -->
+    <div class="sub-card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:6px;">
+        <h3 class="sub-card-title" style="margin:0;">
+          <span>📋 Daftar Naskah Soal (<span id="countExamQuestionsText">0</span>)</span>
+        </h3>
+        <div style="display:flex; gap:6px;">
+          <button type="button" class="btn secondary" style="padding:6px 10px; font-size:11px;" onclick="openExamPdfModal('kunciSoal')">🗝️ Kunci Jawaban PDF</button>
+          <button type="button" class="btn primary" style="padding:6px 10px; font-size:11px;" onclick="openExamPdfModal('soal')">📄 Naskah Soal PDF</button>
+        </div>
+      </div>
+      <div id="examQuestionsListContainer"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ==========================================================================
+     ANDROID MATERIAL DESIGN 3 BOTTOM NAVIGATION BAR
+     ========================================================================== -->
+<nav class="android-bottom-nav" id="androidBottomNav">
+  <div class="nav-item active" id="navItemDashboard" onclick="showDashboard()">
+    <div class="nav-icon-wrapper"><span class="nav-icon">🏠</span></div>
+    <span class="nav-label">Beranda</span>
+  </div>
+  <div class="nav-item" id="navItemHarian" onclick="openModule('viewHarian')">
+    <div class="nav-icon-wrapper"><span class="nav-icon">📅</span></div>
+    <span class="nav-label">Harian</span>
+  </div>
+  <div class="nav-item" id="navItemRekap" onclick="openModule('viewRekap')">
+    <div class="nav-icon-wrapper"><span class="nav-icon">📊</span></div>
+    <span class="nav-label">Rekap</span>
+  </div>
+  <div class="nav-item" id="navItemPenilaian" onclick="openModule('viewPenilaian')">
+    <div class="nav-icon-wrapper"><span class="nav-icon">📝</span></div>
+    <span class="nav-label">Nilai</span>
+  </div>
+  <div class="nav-item" id="navItemConfig" onclick="openModule('viewConfig')">
+    <div class="nav-icon-wrapper"><span class="nav-icon">⚙️</span></div>
+    <span class="nav-label">Pengaturan</span>
+  </div>
+</nav>
+
+<input type="file" id="importFile" accept="application/json" style="display:none;" onchange="handleImport(event)">
+<div class="status-msg" id="statusMsg"></div>
+
+<!-- ==========================================================================
+     MODAL POPUPS
+     ========================================================================== -->
+
+<!-- MODAL 1: PILIH KELAS -->
+<div class="modal-overlay" id="modalSelectClass">
+  <div class="modal-box" style="max-width: 400px;">
+    <div class="modal-header">
+      <h3 class="modal-title" id="selectClassModalTitle">Pilih Kelas</h3>
+      <button class="modal-close" onclick="closeModal('modalSelectClass')">✕</button>
+    </div>
+    <div style="padding: 14px;">
+      <p class="hint" style="margin-top:0; margin-bottom:10px;">
+        Pilih rombongan belajar / kelas yang ingin diabsen pada tanggal ini:
+      </p>
+      <div class="class-btn-grid">
+        <button type="button" class="btn-class-choice" onclick="selectClassForAttendance('Kelas 1')">🏫 Kelas 1</button>
+        <button type="button" class="btn-class-choice" onclick="selectClassForAttendance('Kelas 2')">🏫 Kelas 2</button>
+        <button type="button" class="btn-class-choice" onclick="selectClassForAttendance('Kelas 3')">🏫 Kelas 3</button>
+        <button type="button" class="btn-class-choice" onclick="selectClassForAttendance('Kelas 4')">🏫 Kelas 4</button>
+        <button type="button" class="btn-class-choice" onclick="selectClassForAttendance('Kelas 5')">🏫 Kelas 5</button>
+        <button type="button" class="btn-class-choice" onclick="selectClassForAttendance('Kelas 6')">🏫 Kelas 6</button>
+      </div>
+      <hr style="border:none; border-top:1px dashed var(--line); margin:12px 0;">
+      <button type="button" class="btn secondary" style="width:100%; border-color:#fca5a5; color:var(--danger); background:#fef2f2; font-weight:700;" onclick="openDayStatusFromSelectClassModal()">
+        🔴 Set Tanggal Merah / Hari Libur
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL 2: FORM DAFTAR ABSENSI KELAS -->
+<div class="modal-overlay" id="modalClassAttendance">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 class="modal-title" id="classAttendanceModalTitle">Form Presensi</h3>
+      <button class="modal-close" onclick="closeModal('modalClassAttendance')">✕</button>
+    </div>
+    <div class="modal-body-scroll">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; gap:6px; flex-wrap:wrap;">
+        <span id="modalSummaryText" style="font-size:11.5px; font-weight:700; color:var(--accent-dark);">0 Siswa</span>
+        <div style="display:flex; gap:4px;">
+          <button type="button" onclick="sendWaReport()" class="btn secondary" style="padding:5px 8px; font-size:11px; background:#e8f5e9; color:#2e7d32; border-color:#a5d6a7;">💬 Laporan WA</button>
+          <button type="button" onclick="clearAllModalAttendance()" class="btn ghost" style="padding:5px 8px; font-size:11px;">🧹 Kosongkan</button>
+          <button type="button" onclick="markAllModalPresent()" class="btn primary" style="padding:5px 8px; font-size:11px;">✅ Hadir Semua</button>
+        </div>
+      </div>
+      <div class="search-box">
+        <input type="text" id="modalSearchStudentInput" placeholder="Cari nama siswa..." oninput="renderModalStudentsAttendance()">
+      </div>
+      <div id="modalStudentsListContainer"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn primary" style="width:100%; padding:12px;" onclick="saveClassAttendanceModal()">💾 Simpan Presensi Kelas</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL 3: CETAK & EXPORT PDF (DILENGKAPI OPSI NASKAH SOAL & KUNCI JAWABAN) -->
+<div class="modal-overlay" id="modalExportPdf">
+  <div class="modal-box" style="max-width: 460px;">
+    <div class="modal-header">
+      <h3 class="modal-title">📄 Simpan &amp; Bagikan Laporan PDF</h3>
+      <button class="modal-close" onclick="closeModal('modalExportPdf')">✕</button>
+    </div>
+    <div style="padding: 14px;">
+      
+      <div class="field">
+        <label>Pilih Jenis Laporan PDF</label>
+        <select id="pdfReportTypeSelect" onchange="togglePdfReportTypeUI()">
+          <option value="bulanan" selected>📋 Laporan Bulanan (31 Tanggal)</option>
+          <option value="semester">📊 Laporan 1 Semester (6 Bulan)</option>
+          <option value="tahunan">📈 Laporan 1 Tahun Ajaran (12 Bulan)</option>
+          <option value="penilaian">📝 Leger Nilai Asesmen Mapel (Kurikulum Merdeka)</option>
+          <option value="soal">📜 Naskah Soal Ujian (Soal Ujian SD)</option>
+          <option value="kunciSoal">🗝️ Kunci Jawaban &amp; Pedoman Penskoran</option>
+        </select>
+      </div>
+
+      <div class="field" id="pdfClassSelectBox">
+        <label>Pilih Kelas Yang Dicetak</label>
+        <select id="pdfClassSelect" onchange="updatePdfFileNamePreview()">
+          <option value="Kelas 1">Kelas 1</option>
+          <option value="Kelas 2">Kelas 2</option>
+          <option value="Kelas 3">Kelas 3</option>
+          <option value="Kelas 4" selected>Kelas 4</option>
+          <option value="Kelas 5">Kelas 5</option>
+          <option value="Kelas 6">Kelas 6</option>
+          <option value="ALL">🌐 Cetak Semua Kelas Sekaligus (Per Kelas 1 Lembar)</option>
+        </select>
+      </div>
+
+      <!-- Opsi Kontrol Bulanan -->
+      <div class="row2" id="pdfBulananRow">
+        <div class="field">
+          <label>Bulan Laporan PDF</label>
+          <select id="pdfBulanSelect" onchange="updatePdfFileNamePreview()">
+            <option>Januari</option><option>Februari</option><option>Maret</option>
+            <option>April</option><option>Mei</option><option>Juni</option>
+            <option>Juli</option><option>Agustus</option><option>September</option>
+            <option>Oktober</option><option>November</option><option>Desember</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Tahun</label>
+          <input type="number" id="pdfTahunInput" value="2026" onchange="updatePdfFileNamePreview()">
+        </div>
+      </div>
+
+      <!-- Opsi Kontrol Semester -->
+      <div class="row2" id="pdfSemesterRow" style="display:none;">
+        <div class="field">
+          <label>Pilih Semester</label>
+          <select id="pdfSemesterChoiceSelect" onchange="updatePdfFileNamePreview()">
+            <option value="Ganjil" selected>Ganjil (Juli - Desember)</option>
+            <option value="Genap">Genap (Januari - Juni)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Tahun Laporan</label>
+          <input type="number" id="pdfTahunSemesterInput" value="2026" onchange="updatePdfFileNamePreview()">
+        </div>
+      </div>
+
+      <!-- Opsi Kontrol Penilaian Mapel -->
+      <div class="field" id="pdfPenilaianRow" style="display:none;">
+        <label>Pilih Mata Pelajaran Untuk Leger Nilai / Naskah Soal:</label>
+        <select id="pdfMapelSelect" onchange="updatePdfFileNamePreview()">
+          <!-- Options diisi otomatis dari Master Mapel -->
+        </select>
+      </div>
+
+      <div class="field" style="margin-top:2px;" id="pdfBlankModeBox">
+        <label class="chk-label" style="background:#eef5f1; padding:9px 12px; border-radius:8px; border:1px solid var(--accent); color:var(--accent-dark);">
+          <input type="checkbox" id="pdfBlankMode">
+          <b>Cetak Format Kosong</b> (Sel tabel kosong untuk cek manual pulpen)
+        </label>
+      </div>
+
+      <div class="field" style="margin-top:10px;">
+        <label>Nama File PDF (Bisa Ditulis Ulang)</label>
+        <div style="display:flex; align-items:center; gap:4px;">
+          <input type="text" id="pdfFileNameInput" style="font-weight:700; color:var(--accent-dark);">
+          <span style="font-size:12px; font-weight:700; color:var(--muted);">.pdf</span>
+        </div>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:8px; margin-top:12px;">
+        <button class="btn primary" style="padding:12px; font-size:13px;" onclick="executePdfAction('download')">
+            📥 Langsung Unduh PDF
+        </button>
+        <button class="btn secondary" style="padding:12px; font-size:13px; background:#e8efe9; color:var(--accent-dark); border:1px solid var(--accent);" onclick="executePdfAction('share')">
+            📤 Bagikan PDF (WhatsApp / Drive / Email)
+        </button>
+        <button class="btn ghost" style="padding:10px; font-size:12px;" onclick="executePdfAction('preview')">
+            👁️ Pratinjau di Tab Baru (Preview)
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL 4: KONFIRMASI -->
+<div class="modal-overlay" id="modalConfirm">
+  <div class="modal-box" style="max-width: 380px;">
+    <div class="modal-header">
+      <h3 class="modal-title" id="confirmModalTitle">❓ Konfirmasi</h3>
+      <button class="modal-close" onclick="closeModal('modalConfirm')">✕</button>
+    </div>
+    <div style="padding: 16px; text-align:center;">
+      <p id="confirmModalMessage" style="font-size:13.5px; color:var(--ink); margin:0 0 16px 0; line-height:1.4;"></p>
+      <div style="display:flex; gap:10px;">
+        <button class="btn ghost" onclick="closeModal('modalConfirm')">Batal</button>
+        <button class="btn primary" id="confirmModalBtnAction" style="background:var(--danger); color:#fff;">Ya, Lanjutkan</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL POPUP NOTIFIKASI PREMIUM -->
+<div class="modal-overlay" id="modalAlert">
+  <div class="modal-box" style="max-width: 390px; text-align: center;">
+    <div class="modal-header" style="justify-content: center; border-bottom: none; padding-bottom: 0;">
+      <div id="alertModalIcon" style="font-size: 38px; line-height: 1;">⚠️</div>
+    </div>
+    <div style="padding: 12px 20px 20px 20px;">
+      <h3 class="modal-title" id="alertModalTitle" style="font-size: 16px; font-weight: 800; color: var(--accent-dark); margin-bottom: 8px; text-align: center;">Pemberitahuan</h3>
+      <p id="alertModalMessage" style="font-size: 13px; color: var(--ink); margin: 0 0 18px 0; line-height: 1.45;"></p>
+      <button type="button" class="btn primary" style="width: 100%; padding: 11px; font-size: 13px;" onclick="closeModal('modalAlert')">
+        Mengerti &amp; Lanjutkan
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL 5: EDIT STATUS TANGGAL -->
+<div class="modal-overlay" id="modalStatusHari">
+  <div class="modal-box" style="max-width: 400px; height: auto;">
+    <div class="modal-header">
+      <h3 class="modal-title" id="modalStatusTitle">Edit Status Tanggal</h3>
+      <button class="modal-close" onclick="closeModal('modalStatusHari')">✕</button>
+    </div>
+    <div style="padding: 14px;">
+      <div class="field">
+        <label>Status Hari</label>
+        <select id="statusHariSelect" onchange="toggleLiburNoteField()">
+          <option value="efektif">Hari Efektif (Biasa)</option>
+          <option value="libur">Libur / Tanggal Merah</option>
+        </select>
+      </div>
+      <div class="field" id="liburNoteField" style="display:none;">
+        <label>Keterangan Libur</label>
+        <input type="text" id="liburNoteInput" placeholder="Contoh: Libur Nasional / Tanggal Merah">
+      </div>
+      <div style="display:flex; gap:8px; margin-top:14px;">
+        <button class="btn ghost" onclick="closeModal('modalStatusHari')">Batal</button>
+        <button class="btn primary" onclick="saveDayStatus()">Simpan Status</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL 6: EDIT SISWA -->
+<div class="modal-overlay" id="modalEditStudent">
+  <div class="modal-box" style="max-width: 400px; height: auto;">
+    <div class="modal-header">
+      <h3 class="modal-title">✏️ Edit Data Siswa</h3>
+      <button class="modal-close" onclick="closeModal('modalEditStudent')">✕</button>
+    </div>
+    <div style="padding: 14px;">
+      <input type="hidden" id="editStudentId">
+      <div class="row2">
+        <div class="field">
+          <label>NISN / NIS</label>
+          <input type="text" id="editSNis">
+        </div>
+        <div class="field">
+          <label>Jenis Kelamin</label>
+          <select id="editSJk">
+            <option value="">-- Pilih Jenis Kelamin --</option>
+            <option value="L">Laki-laki (L)</option>
+            <option value="P">Perempuan (P)</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Nama Lengkap Siswa</label>
+        <input type="text" id="editSNama">
+      </div>
+      <div class="field">
+        <label>Rombongan Belajar / Kelas</label>
+        <select id="editSKelas">
+          <option value="Kelas 1">Kelas 1</option>
+          <option value="Kelas 2">Kelas 2</option>
+          <option value="Kelas 3">Kelas 3</option>
+          <option value="Kelas 4">Kelas 4</option>
+          <option value="Kelas 5">Kelas 5</option>
+          <option value="Kelas 6">Kelas 6</option>
+        </select>
+      </div>
+      <div style="display:flex; gap:8px; margin-top:14px;">
+        <button class="btn ghost" onclick="closeModal('modalEditStudent')">Batal</button>
+        <button class="btn primary" onclick="saveEditedStudent()">Simpan Perubahan</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL 7: QUICK EDIT ABSENSI SISWA -->
+<div class="modal-overlay" id="modalQuickEditCell">
+  <div class="modal-box" style="max-width: 380px; height: auto;">
+    <div class="modal-header">
+      <h3 class="modal-title" id="quickEditTitle">Edit Absensi</h3>
+      <button class="modal-close" onclick="closeModal('modalQuickEditCell')">✕</button>
+    </div>
+    <div style="padding: 16px; text-align:center;">
+      <p id="quickEditSub" style="font-size:13px; font-weight:700; color:var(--accent-dark); margin-top:0; margin-bottom:12px;"></p>
+      
+      <div class="status-pill-group" style="margin-bottom:10px;">
+        <button type="button" id="qBtnH" class="btn-pill" onclick="applyQuickStatus('H')">H</button>
+        <button type="button" id="qBtnS" class="btn-pill" onclick="applyQuickStatus('S')">S</button>
+        <button type="button" id="qBtnI" class="btn-pill" onclick="applyQuickStatus('I')">I</button>
+        <button type="button" id="qBtnA" class="btn-pill" onclick="applyQuickStatus('A')">A</button>
+        <button type="button" id="qBtnEmpty" class="btn-pill" onclick="applyQuickStatus('')">Kosong</button>
+      </div>
+      <div class="field" style="margin-bottom:14px; text-align:left;">
+        <label>Catatan / Alasan (Opsional)</label>
+        <input type="text" id="quickEditNoteInput" placeholder="Contoh: Demam Ada Surat Dokter">
+      </div>
+      <button class="btn ghost" onclick="closeModal('modalQuickEditCell')" style="width:100%;">Batal</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL 8: KELOLA JADWAL MENGAJAR -->
+<div class="modal-overlay" id="modalManageJadwal">
+  <div class="modal-box" style="max-width: 440px;">
+    <div class="modal-header">
+      <h3 class="modal-title">📋 Kelola Jadwal Mengajar Guru</h3>
+      <button class="modal-close" onclick="closeModal('modalManageJadwal')">✕</button>
+    </div>
+    <div class="modal-body-scroll">
+      <input type="hidden" id="editingJadwalId">
+      <div class="field">
+        <label>Pilih Hari Untuk Tambah / Edit Jadwal:</label>
+        <select id="jHariSelect">
+          <option value="Senin">Senin</option>
+          <option value="Selasa">Selasa</option>
+          <option value="Rabu">Rabu</option>
+          <option value="Kamis">Kamis</option>
+          <option value="Jumat">Jumat</option>
+          <option value="Sabtu">Sabtu</option>
+        </select>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>Jam Ke-</label>
+          <input type="text" id="jJamKe" placeholder="Contoh: 1 - 2">
+        </div>
+        <div class="field">
+          <label>Waktu (Jam)</label>
+          <input type="text" id="jWaktu" placeholder="07:30 - 08:40">
+        </div>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>Kelas</label>
+          <select id="jKelasSelect">
+            <option value="Kelas 1">Kelas 1</option>
+            <option value="Kelas 2">Kelas 2</option>
+            <option value="Kelas 3">Kelas 3</option>
+            <option value="Kelas 4" selected>Kelas 4</option>
+            <option value="Kelas 5">Kelas 5</option>
+            <option value="Kelas 6">Kelas 6</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Mata Pelajaran</label>
+          <select id="jMapelSelect"></select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Ruang / Catatan (Opsional)</label>
+        <input type="text" id="jRuang" placeholder="Contoh: Lab Komputer / Ruang Kelas 4">
+      </div>
+      <button type="button" id="btnSaveJadwal" class="btn primary" style="width:100%; margin-bottom:12px;" onclick="addJadwalItem()">+ Tambah Ke Jadwal Hari Ini</button>
+      <hr style="border:none; border-top:1px solid var(--line); margin:12px 0;">
+      <h4 style="margin:0 0 8px 0; font-size:12.5px; color:var(--accent-dark);">📌 Daftar Semua Jadwal Tersimpan:</h4>
+      <div id="jadwalManageListContainer"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL POPUP 9: CUSTOM PICKER LIST MODAL -->
+<div class="modal-overlay" id="modalCustomPicker">
+  <div class="modal-box" style="max-width: 420px; height: auto; max-height: 80vh;">
+    <div class="modal-header">
+      <h3 class="modal-title" id="customPickerTitle">Pilih Opsi</h3>
+      <button class="modal-close" onclick="closeModal('modalCustomPicker')">✕</button>
+    </div>
+    <div class="modal-body-scroll" id="customPickerContainer" style="padding: 10px;">
+      <!-- Pilihan akan digambar otomatis via JS -->
+    </div>
+  </div>
+</div>
+
+<!-- MODAL POPUP 10: FILTER LAPORAN REKAP -->
+<div class="modal-overlay" id="modalFilterRekap">
+  <div class="modal-box" style="max-width: 420px; height: auto;">
+    <div class="modal-header">
+      <h3 class="modal-title">📋 Filter Laporan Rekap</h3>
+      <button class="modal-close" onclick="closeModal('modalFilterRekap')">✕</button>
+    </div>
+    <div style="padding: 16px;">
+      <div class="field">
+        <label>Pilih Mode Laporan:</label>
+        <select id="rekapModeSelect" onchange="toggleRekapModeUI()">
+          <option value="bulanan" selected>📅 Rekap Bulanan (Matriks Tanggal 1-31)</option>
+          <option value="semester">📊 Rekap 1 Semester (6 Bulan)</option>
+          <option value="tahunan">📈 Rekap 1 Tahun Ajaran (12 Bulan)</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Pilih Kelas Untuk Rekap:</label>
+        <select id="rekapClassSelect">
+          <option value="Kelas 1">Kelas 1</option>
+          <option value="Kelas 2">Kelas 2</option>
+          <option value="Kelas 3">Kelas 3</option>
+          <option value="Kelas 4" selected>Kelas 4</option>
+          <option value="Kelas 5">Kelas 5</option>
+          <option value="Kelas 6">Kelas 6</option>
+        </select>
+      </div>
+
+      <div class="row2" id="rekapBulananControls">
+        <div class="field">
+          <label>Bulan Rekap:</label>
+          <select id="rekapBulanSelect">
+            <option>Januari</option><option>Februari</option><option>Maret</option>
+            <option>April</option><option>Mei</option><option>Juni</option>
+            <option>Juli</option><option>Agustus</option><option>September</option>
+            <option>Oktober</option><option>November</option><option>Desember</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Tahun Rekap:</label>
+          <input type="number" id="rekapTahunInput" value="2026">
+        </div>
+      </div>
+
+      <div class="field" id="rekapSemesterControls" style="display:none;">
+        <label>Semester Laporan:</label>
+        <select id="rekapSemesterSelect">
+          <option value="Ganjil">Ganjil (Juli - Desember)</option>
+          <option value="Genap">Genap (Januari - Juni)</option>
+        </select>
+      </div>
+
+      <button type="button" class="btn primary" style="width:100%; padding:12px; margin-top:8px;" onclick="applyFilterRekapModal()">🔍 Terapkan Filter Laporan</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL POPUP 11: DETAIL RINGKASAN HARI INI -->
+<div class="modal-overlay" id="modalTodaySummaryDetail">
+  <div class="modal-box" style="max-width: 440px;">
+    <div class="modal-header">
+      <h3 class="modal-title" id="todayDetailModalTitle">📅 Detail Ringkasan Hari Ini</h3>
+      <button class="modal-close" onclick="closeModal('modalTodaySummaryDetail')">✕</button>
+    </div>
+    <div class="modal-body-scroll">
+      <!-- Ringkasan Statistik -->
+      <div class="today-stat-grid" id="todayDetailStatGrid"></div>
+
+      <!-- Jadwal Mengajar -->
+      <div style="margin-top:12px; padding:10px; background:var(--paper); border-radius:10px; border:1px solid var(--line);">
+        <div style="font-size:12px; font-weight:700; color:var(--accent-dark); margin-bottom:4px;">📋 Jadwal Mengajar Hari Ini:</div>
+        <div id="todayDetailJadwalContent" style="font-size:11.5px; color:var(--ink);"></div>
+      </div>
+
+      <!-- Daftar Siswa Absen / Tidak Hadir -->
+      <div style="margin-top:12px; padding:10px; background:#fdfbf7; border-radius:10px; border:1px solid var(--line);">
+        <div style="font-size:12px; font-weight:700; color:var(--accent-dark); margin-bottom:6px;">📝 Siswa Tidak Hadir / Keterangan Hari Ini:</div>
+        <div id="todayDetailAbsentListContent" style="font-size:11.5px; color:var(--ink);"></div>
+      </div>
+    </div>
+    <div class="modal-footer" style="display:flex; gap:8px;">
+      <button type="button" class="btn secondary" style="flex:1; background:#e8f5e9; color:#2e7d32; border-color:#a5d6a7;" onclick="sendTodayWaReport()">💬 Kirim WA</button>
+      <button type="button" class="btn primary" style="flex:1.2;" onclick="openTodayAttendanceFromModal()">📋 Absen Hari Ini</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL POPUP 12: TAMBAH SISWA BARU -->
+<div class="modal-overlay" id="modalAddStudent">
+  <div class="modal-box" style="max-width: 420px; height: auto;">
+    <div class="modal-header">
+      <h3 class="modal-title">➕ Tambah Siswa Baru</h3>
+      <button class="modal-close" onclick="closeModal('modalAddStudent')">✕</button>
+    </div>
+    <div style="padding: 16px;">
+      <div class="row2">
+        <div class="field">
+          <label>NISN / NIS</label>
+          <input type="text" id="sNis" placeholder="Contoh: 1001">
+        </div>
+        <div class="field">
+          <label>Jenis Kelamin</label>
+          <select id="sJk">
+            <option value="" selected>-- Pilih Jenis Kelamin --</option>
+            <option value="L">Laki-laki (L)</option>
+            <option value="P">Perempuan (P)</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Nama Lengkap Siswa</label>
+        <input type="text" id="sNama" placeholder="Contoh: Ahmad Budi">
+      </div>
+      <button type="button" onclick="addSingleStudentFromModal()" class="btn primary" style="width:100%; margin-top:4px; padding:12px;">+ Simpan Siswa</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL POPUP 13: IMPOR BANYAK SISWA -->
+<div class="modal-overlay" id="modalImportStudents">
+  <div class="modal-box" style="max-width: 440px; height: auto;">
+    <div class="modal-header">
+      <h3 class="modal-title">📥 Impor Banyak Siswa</h3>
+      <button class="modal-close" onclick="closeModal('modalImportStudents')">✕</button>
+    </div>
+    <div style="padding: 16px;">
+      <p class="hint" style="margin-top:0;">
+        Tempelkan daftar nama siswa (satu nama per baris) dari WhatsApp / Excel. Nomor urut/bullet akan <b>otomatis dibersihkan</b>.
+      </p>
+      <textarea id="bulkStudentsInput" rows="6" placeholder="1. Ahmad Budi&#10;2) Siti Aminah&#10;- Bambang Pamungkas"></textarea>
+      <button type="button" onclick="importBulkStudentsFromModal()" class="btn primary" style="width:100%; margin-top:10px; padding:12px;">📥 Impor Ke Kelas Ini</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL POPUP 14: DETAIL & AKSI SISWA -->
+<div class="modal-overlay" id="modalStudentDetail">
+  <div class="modal-box" style="max-width: 400px; height: auto;">
+    <div class="modal-header">
+      <h3 class="modal-title">👤 Detail Data Siswa</h3>
+      <button class="modal-close" onclick="closeModal('modalStudentDetail')">✕</button>
+    </div>
+    <div style="padding: 16px;">
+      <input type="hidden" id="activeDetailStudentId">
+      <div style="background:var(--paper); border:1px solid var(--line); border-radius:10px; padding:12px; margin-bottom:14px; text-align:center;">
+        <div style="font-size:16px; font-weight:800; color:var(--accent-dark);" id="stDetailNama">-</div>
+        <div style="font-size:12px; color:var(--muted); margin-top:3px;" id="stDetailSubInfo">-</div>
+      </div>
+
+      <!-- Ringkasan Presensi Siswa Ini -->
+      <div style="background:#f0f5f2; border:1px solid var(--accent); border-radius:10px; padding:10px; margin-bottom:14px;">
+        <div style="font-size:11.5px; font-weight:700; color:var(--accent-dark); margin-bottom:4px;">📊 Rekap Kehadiran Siswa Ini:</div>
+        <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:4px; text-align:center;" id="stDetailAttendanceGrid"></div>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <button type="button" class="btn primary" style="padding:10px;" onclick="openEditStudentFromDetailModal()">✏️ Edit Data Siswa</button>
+        <button type="button" class="btn ghost" style="padding:10px; color:var(--danger); border-color:#fca5a5;" onclick="deleteStudentFromDetailModal()">🗑️ Hapus Siswa</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL POPUP 15: FILTER PENILAIAN -->
+<div class="modal-overlay" id="modalFilterPenilaian">
+  <div class="modal-box" style="max-width: 420px; height: auto;">
+    <div class="modal-header">
+      <h3 class="modal-title">📋 Filter Penilaian Mapel</h3>
+      <button class="modal-close" onclick="closeModal('modalFilterPenilaian')">✕</button>
+    </div>
+    <div style="padding: 16px;">
+      <div class="field">
+        <label>Pilih Kelas Penilaian:</label>
+        <select id="pKelasSelect">
+          <option value="Kelas 1">Kelas 1</option>
+          <option value="Kelas 2">Kelas 2</option>
+          <option value="Kelas 3">Kelas 3</option>
+          <option value="Kelas 4" selected>Kelas 4</option>
+          <option value="Kelas 5">Kelas 5</option>
+          <option value="Kelas 6">Kelas 6</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Pilih Mata Pelajaran:</label>
+        <select id="pMapelSelect"></select>
+      </div>
+      <div class="field">
+        <label>Semester:</label>
+        <select id="pSemesterSelect">
+          <option value="Ganjil">Ganjil</option>
+          <option value="Genap" selected>Genap</option>
+        </select>
+      </div>
+      <button type="button" class="btn primary" style="width:100%; padding:12px;" onclick="applyFilterPenilaianModal()">🔍 Terapkan Filter Penilaian</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL POPUP 16: KELOLA TP PENILAIAN -->
+<div class="modal-overlay" id="modalManageTp">
+  <div class="modal-box" style="max-width: 440px;">
+    <div class="modal-header">
+      <h3 class="modal-title">📌 Kelola Tujuan Pembelajaran (TP)</h3>
+      <button class="modal-close" onclick="closeModal('modalManageTp')">✕</button>
+    </div>
+    <div class="modal-body-scroll">
+      <div id="tpModalSubContext" style="font-size:12px; font-weight:700; color:var(--accent-dark); background:#f0f5f2; padding:8px 10px; border-radius:8px; border:1px solid var(--accent); margin-bottom:12px;">
+        📌 Konteks: -
+      </div>
+      <div class="field">
+        <label>Tambah TP / Bab Baru Untuk Kelas Ini:</label>
+        <div style="display:flex; gap:8px;">
+          <input type="text" id="tpInputName" placeholder="Contoh: Memahami Cerita Tokoh" style="flex:1;">
+          <button type="button" onclick="addTpItem()" class="btn primary" style="padding:0 14px;">+ Tambah</button>
+        </div>
+      </div>
+      <hr style="border:none; border-top:1px solid var(--line); margin:12px 0;">
+      <h4 style="margin:0 0 8px 0; font-size:12px; color:var(--accent-dark);">📋 Daftar TP Tersimpan untuk Kelas Ini:</h4>
+      <div id="tpListContainer"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL POPUP 17: FILTER SOAL UJIAN -->
+<div class="modal-overlay" id="modalFilterExam">
+  <div class="modal-box" style="max-width: 420px; height: auto;">
+    <div class="modal-header">
+      <h3 class="modal-title">📋 Filter Naskah Soal Ujian</h3>
+      <button class="modal-close" onclick="closeModal('modalFilterExam')">✕</button>
+    </div>
+    <div style="padding: 16px;">
+      <div class="row2">
+        <div class="field">
+          <label>Pilih Kelas:</label>
+          <select id="exKelasSelect">
+            <option value="Kelas 1">Kelas 1</option>
+            <option value="Kelas 2">Kelas 2</option>
+            <option value="Kelas 3">Kelas 3</option>
+            <option value="Kelas 4" selected>Kelas 4</option>
+            <option value="Kelas 5">Kelas 5</option>
+            <option value="Kelas 6">Kelas 6</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Mata Pelajaran:</label>
+          <select id="exMapelSelect"></select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Jenis Ujian:</label>
+        <select id="exTypeSelect">
+          <option value="Sumatif Akhir Semester (SAS)" selected>Sumatif Akhir Semester (SAS)</option>
+          <option value="Sumatif Tengah Semester (STS)">Sumatif Tengah Semester (STS)</option>
+          <option value="Sumatif Lingkup Materi (Bab)">Sumatif Lingkup Materi (Bab)</option>
+          <option value="Ujian Sekolah">Ujian Sekolah</option>
+        </select>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>Semester:</label>
+          <select id="exSemesterSelect">
+            <option value="Ganjil">Ganjil</option>
+            <option value="Genap" selected>Genap</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Tahun:</label>
+          <input type="number" id="exTahunInput" value="2026">
+        </div>
+      </div>
+      <button type="button" class="btn primary" style="width:100%; padding:12px; margin-top:8px;" onclick="applyFilterExamModal()">🔍 Terapkan Filter Ujian</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL POPUP 18: PENGATURAN KOP UJIAN -->
+<div class="modal-overlay" id="modalExamKop">
+  <div class="modal-box" style="max-width: 440px; height: auto;">
+    <div class="modal-header">
+      <h3 class="modal-title">⚙️ Pengaturan Kop &amp; Waktu Ujian</h3>
+      <button class="modal-close" onclick="closeModal('modalExamKop')">✕</button>
+    </div>
+    <div style="padding: 16px;">
+      <div class="row2">
+        <div class="field">
+          <label>Alokasi Waktu (Menit)</label>
+          <input type="text" id="exTimeInput" placeholder="Contoh: 90 Menit">
+        </div>
+        <div class="field">
+          <label>Tanggal Pelaksanaan Ujian</label>
+          <input type="text" id="exDateInput" placeholder="Contoh: Senin, 8 Juni 2026">
+        </div>
+      </div>
+      <div class="field">
+        <label>Petunjuk Umum Naskah Soal:</label>
+        <textarea id="exInstructionsInput" rows="3" placeholder="1. Berdoalah sebelum mengerjakan.&#10;2. Tulislah nama dan nomor pada lembar jawab."></textarea>
+      </div>
+      <button type="button" class="btn primary" style="width:100%; padding:12px; margin-top:8px;" onclick="saveExamKopFromModal()">💾 Simpan Kop Ujian</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL POPUP 19: FORM TAMBAH BUTIR SOAL -->
+<div class="modal-overlay" id="modalAddExamQuestion">
+  <div class="modal-box" style="max-width: 460px;">
+    <div class="modal-header">
+      <h3 class="modal-title">➕ Tambah Butir Soal Baru</h3>
+      <button class="modal-close" onclick="closeModal('modalAddExamQuestion')">✕</button>
+    </div>
+    <div class="modal-body-scroll">
+      <div class="row2">
+        <div class="field">
+          <label>Bentuk Soal:</label>
+          <select id="qTypeSelect" onchange="toggleQuestionOptionsUI()">
+            <option value="PG" selected>Pilihan Ganda (PG)</option>
+            <option value="ISIAN">Isian Singkat</option>
+            <option value="ESSAY">Uraian / Essay</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Bobot Nilai Soal:</label>
+          <input type="number" id="qWeightInput" value="1" min="1" max="100">
+        </div>
+      </div>
+      <div class="field">
+        <label>Teks Pertanyaan Soal:</label>
+        <textarea id="qTextInput" rows="3" placeholder="Ketikkan rumusan pertanyaan soal di sini..."></textarea>
+      </div>
+
+      <!-- Opsi Jawaban Pilihan Ganda -->
+      <div id="qPgOptionsBox" style="background:#fdfbf7; border:1px solid var(--line); border-radius:8px; padding:10px; margin-bottom:10px;">
+        <label style="font-size:11.5px; font-weight:700; color:var(--accent-dark); display:block; margin-bottom:6px;">Pilihan Jawaban (Pilihan Ganda):</label>
+        <div class="row2">
+          <div class="field"><label>A.</label><input type="text" id="qOptA" placeholder="Pilihan A"></div>
+          <div class="field"><label>B.</label><input type="text" id="qOptB" placeholder="Pilihan B"></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label>C.</label><input type="text" id="qOptC" placeholder="Pilihan C"></div>
+          <div class="field"><label>D.</label><input type="text" id="qOptD" placeholder="Pilihan D (Opsional)"></div>
+        </div>
+        <div class="field">
+          <label>Kunci Jawaban Benar (PG):</label>
+          <select id="qKeyPgSelect">
+            <option value="A">A</option>
+            <option value="B">B</option>
+            <option value="C">C</option>
+            <option value="D">D</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Kunci Jawaban Isian / Rubrik Essay -->
+      <div id="qEssayKeyBox" style="display:none;" class="field">
+        <label>Kunci Jawaban / Pedoman Penskoran:</label>
+        <textarea id="qKeyEssayInput" rows="2" placeholder="Ketikkan jawaban singkat / kriteria nilai essay..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" onclick="addExamQuestionFromModal()" class="btn primary" style="width:100%; padding:12px;">+ Simpan Butir Soal</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL POPUP 20: IMPOR TEKS AI SOAL UJIAN -->
+<div class="modal-overlay" id="modalImportExamAI">
+  <div class="modal-box" style="max-width: 500px;">
+    <div class="modal-header">
+      <h3 class="modal-title">🤖 Impor Soal Ujian via Teks AI</h3>
+      <button class="modal-close" onclick="closeModal('modalImportExamAI')">✕</button>
+    </div>
+    <div class="modal-body-scroll">
+      <!-- TAHAP 1: GENERATOR PROMPT AI -->
+      <div style="background:var(--paper); border:1.5px solid var(--accent); border-radius:12px; padding:12px; margin-bottom:14px;">
+        <h4 style="margin:0 0 8px 0; font-size:13px; color:var(--accent-dark);">1️⃣ Generator Prompt ChatGPT / Claude</h4>
+        <p class="hint" style="margin-top:0; margin-bottom:10px;">
+          Atur kriteria soal di bawah ini, lalu klik tombol untuk menyalin instruksi prompt otomatis yang siap dikirim ke ChatGPT:
+        </p>
+        <div class="row2">
+          <div class="field">
+            <label>Mata Pelajaran:</label>
+            <select id="promptMapelSelect"></select>
+          </div>
+          <div class="field">
+            <label>Kelas / Fase:</label>
+            <select id="promptKelasSelect">
+              <option value="Kelas 1">Kelas 1 / Fase A</option>
+              <option value="Kelas 2">Kelas 2 / Fase A</option>
+              <option value="Kelas 3">Kelas 3 / Fase B</option>
+              <option value="Kelas 4" selected>Kelas 4 / Fase B</option>
+              <option value="Kelas 5">Kelas 5 / Fase C</option>
+              <option value="Kelas 6">Kelas 6 / Fase C</option>
+            </select>
+          </div>
+        </div>
+        <div class="row3">
+          <div class="field">
+            <label>Semester:</label>
+            <select id="promptSemesterSelect">
+              <option value="Ganjil">Ganjil</option>
+              <option value="Genap" selected>Genap</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Tingkat Kesulitan:</label>
+            <select id="promptDifficultySelect">
+              <option value="Mudah / LOTS">Mudah (LOTS)</option>
+              <option value="Sedang / MOTS" selected>Sedang (MOTS/HOTS)</option>
+              <option value="Sulit / HOTS Tinggi">Sulit (HOTS Tinggi)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Jumlah Soal:</label>
+            <input type="number" id="promptCountInput" value="10" min="1" max="50">
+          </div>
+        </div>
+        <div class="field">
+          <label>Bentuk / Jenis Soal:</label>
+          <select id="promptTypeSelect">
+            <option value="Campuran (PG, Isian, Uraian)" selected>Campuran (PG + Isian + Uraian)</option>
+            <option value="Pilihan Ganda (PG) Saja">Pilihan Ganda (PG) Saja</option>
+            <option value="Isian Singkat Saja">Isian Singkat Saja</option>
+            <option value="Uraian / Essay Saja">Uraian / Essay Saja</option>
+          </select>
+        </div>
+        <button type="button" class="btn secondary" style="width:100%; font-weight:800; border-color:var(--accent); color:var(--accent-dark); background:#f0fdf4;" onclick="copyAiPrompt()">
+          📋 Salin Prompt untuk ChatGPT
+        </button>
+      </div>
+
+      <!-- TAHAP 2: TEMPAT TEMPEL TEKS DARI AI -->
+      <div style="background:var(--paper); border:1.5px solid var(--line); border-radius:12px; padding:12px;">
+        <h4 style="margin:0 0 8px 0; font-size:13px; color:var(--accent-dark);">2️⃣ Tempelkan Hasil Teks dari ChatGPT</h4>
+        <p class="hint" style="margin-top:0; margin-bottom:8px;">
+          Tempelkan (*paste*) naskah teks jawaban dari ChatGPT di kotak bawah ini:
+        </p>
+        <textarea id="aiExamTextInput" rows="6" placeholder="1. Siapakah Presiden pertama Indonesia?&#10;A. Ir. Soekarno&#10;B. Mohammad Hatta&#10;C. B.J. Habibie&#10;D. Soeharto&#10;Kunci: A&#10;Bobot: 1"></textarea>
+        <button type="button" class="btn primary" style="width:100%; margin-top:8px; padding:11px;" onclick="processAiExamText()">
+          ⚡ Proses &amp; Pratinjau Soal
+        </button>
+      </div>
+
+      <!-- PRATINJAU SOAL HASIL PARSING -->
+      <div id="aiExamPreviewBox" style="display:none; margin-top:14px; background:#fffdf9; border:1.5px solid var(--amber); border-radius:12px; padding:12px;">
+        <h4 style="margin:0 0 8px 0; font-size:13px; color:var(--amber);">🔍 Pratinjau Hasil Parsing (<span id="aiParsedCountText">0</span> Soal)</h4>
+        <div id="aiExamPreviewContainer"></div>
+      </div>
+    </div>
+    <div class="modal-footer" id="aiImportFooter" style="display:none;">
+      <button type="button" class="btn primary" style="width:100%; padding:12px;" onclick="saveImportedAiQuestions()">
+        💾 Simpan Semua Soal ke Naskah Ujian
+      </button>
+    </div>
+  </div>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/db.js"></script>
+<script src="js/helpers.js"></script>
+<script src="js/header-clock.js"></script>
+<script src="js/theme-switcher.js"></script>
+<script src="js/harian.js"></script>
+<script src="js/rekap.js"></script>
+<script src="js/penilaian.js"></script>
+<script src="js/soal-ujian.js"></script>
+<script src="js/siswa.js"></script>
+<script src="js/export-excel.js"></script>
+
+<!-- REGISTER BERKAS PDF MODULAR BARU -->
+<script src="js/pdf-core.js"></script>
+<script src="js/pdf-absensi.js"></script>
+<script src="js/pdf-penilaian.js"></script>
+<script src="js/pdf-soal.js"></script>
+
+<script src="js/app.js"></script>
+</body>
+</html>
